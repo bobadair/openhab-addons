@@ -12,6 +12,7 @@
  */
 package org.openhab.binding.globalcache.internal.handler;
 
+import static java.lang.Math.max;
 import static org.openhab.binding.globalcache.internal.GlobalCacheBindingConstants.*;
 
 import java.io.BufferedInputStream;
@@ -58,6 +59,7 @@ import org.openhab.binding.globalcache.internal.command.CommandGetstate;
 import org.openhab.binding.globalcache.internal.command.CommandGetversion;
 import org.openhab.binding.globalcache.internal.command.CommandSendir;
 import org.openhab.binding.globalcache.internal.command.CommandSendserial;
+import org.openhab.binding.globalcache.internal.command.CommandSetsensornotify;
 import org.openhab.binding.globalcache.internal.command.CommandSetstate;
 import org.openhab.binding.globalcache.internal.command.RequestMessage;
 import org.openhab.binding.globalcache.internal.command.ResponseMessage;
@@ -71,7 +73,7 @@ import org.slf4j.LoggerFactory;
  * @author Mark Hilbush - Initial contribution
  */
 public class GlobalCacheHandler extends BaseThingHandler {
-    private Logger logger = LoggerFactory.getLogger(GlobalCacheHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(GlobalCacheHandler.class);
 
     private static final String GLOBALCACHE_THREAD_POOL = "globalCacheHandler";
 
@@ -79,11 +81,18 @@ public class GlobalCacheHandler extends BaseThingHandler {
     private CommandProcessor commandProcessor;
     private ScheduledExecutorService scheduledExecutorService = ThreadPoolManager
             .getScheduledPool(GLOBALCACHE_THREAD_POOL + "-" + thingID());
-    private ScheduledFuture<?> scheduledFuture;
+    private ScheduledFuture<?> commandProcessorJob;
+    private ScheduledFuture<?> sensorPollingJob;
+    private Object pollingJobLock = new Object();
 
     private LinkedBlockingQueue<RequestMessage> sendQueue = null;
 
     private String ipv4Address;
+
+    private String flexActiveCable = null;
+
+    private Integer sensorPollInterval = 0;
+    private Integer sensorNotifyPort = 0;
 
     // IR transaction counter
     private AtomicInteger irCounter;
@@ -95,7 +104,7 @@ public class GlobalCacheHandler extends BaseThingHandler {
         super(gcDevice);
         irCounter = new AtomicInteger(1);
         commandProcessor = new CommandProcessor();
-        scheduledFuture = null;
+        commandProcessorJob = null;
         this.ipv4Address = ipv4Address;
     }
 
@@ -115,15 +124,75 @@ public class GlobalCacheHandler extends BaseThingHandler {
             markThingOfflineWithError(ThingStatusDetail.OFFLINE.CONFIGURATION_ERROR, "No suitable network interface");
             return;
         }
-        scheduledFuture = scheduledExecutorService.schedule(commandProcessor, 2, TimeUnit.SECONDS);
+        commandProcessorJob = scheduledExecutorService.schedule(commandProcessor, 2, TimeUnit.SECONDS);
+
+        if (thing.getThingTypeUID().equals(THING_TYPE_ITACH_FLEX)) {
+
+            Number sensorPollIntervalNum = (Number) thing.getConfiguration().get(CONFIG_SENSOR_POLL_INTERVAL);
+            sensorPollInterval = (sensorPollIntervalNum == null) ? 0 : max(5, sensorPollIntervalNum.intValue());
+            if (sensorPollInterval > 86400) {
+                logger.warn("sensorPollInterval parameter set to invalid value for thing {}. Reducing to 86400.",
+                        thingID());
+                sensorPollInterval = 86400;
+            }
+            logger.debug("sensorPollInterval set to {} for thing {}", sensorPollInterval, thingID());
+
+            Number sensorNotifyPortNum = (Number) thing.getConfiguration().get(CONFIG_SENSOR_NOTIFY_PORT);
+            sensorNotifyPort = (sensorNotifyPortNum == null) ? 0 : sensorNotifyPortNum.intValue();
+            if (sensorNotifyPort < 0 || sensorNotifyPort > 65535) {
+                logger.warn(
+                        "sensorNotifyPort parameter set to invalid value for thing {}. Disabling multicast notifications.",
+                        thingID());
+                sensorNotifyPort = 0;
+            } else {
+                logger.debug("sensorNotifyPort set to {} for thing {}", sensorNotifyPort, thingID());
+            }
+
+            flexActiveCable = getFlexActiveCable();
+            if (flexActiveCable.equals(ACTIVE_CABLE_RELAY)) {
+                // initialization for Flex relay/sensor cable
+
+                if (sensorPollInterval != 0) {
+                    // Start periodic polling job for Flex sensors
+                    sensorPollingJob = scheduler.scheduleWithFixedDelay(this::pollSensors, 0, sensorPollInterval,
+                            TimeUnit.SECONDS);
+                }
+
+                if (sensorNotifyPort != 0) {
+                    // Enable multicast notifications for Flex sensors
+                    CommandSetsensornotify setsensornotify = new CommandSetsensornotify(thing, sendQueue, "2", "1",
+                            sensorNotifyPort.toString(), "0");
+                    setsensornotify.execute();
+                    setsensornotify = new CommandSetsensornotify(thing, sendQueue, "2", "2",
+                            sensorNotifyPort.toString(), "0");
+                    setsensornotify.execute();
+                    setsensornotify = new CommandSetsensornotify(thing, sendQueue, "2", "3",
+                            sensorNotifyPort.toString(), "0");
+                    setsensornotify.execute();
+                    setsensornotify = new CommandSetsensornotify(thing, sendQueue, "2", "4",
+                            sensorNotifyPort.toString(), "0");
+                    setsensornotify.execute();
+
+                    // TODO: Start multicast listener for Flex sensors
+                }
+            }
+        }
+    }
+
+    private void pollSensors() {
+        synchronized (pollingJobLock) {
+            if (isOnline()) {
+                // poll sensors
+            }
+        }
     }
 
     @Override
     public void dispose() {
         logger.debug("Disposing thing {}", thingID());
         commandProcessor.terminate();
-        if (scheduledFuture != null) {
-            scheduledFuture.cancel(false);
+        if (commandProcessorJob != null) {
+            commandProcessorJob.cancel(false);
         }
     }
 
@@ -220,8 +289,9 @@ public class GlobalCacheHandler extends BaseThingHandler {
     }
 
     private void handleRefresh(String modNum, String conNum, Channel channel) {
-        // REFRESH makes sense only for CC channels because we can query the device for the relay state
-        if (channel.getChannelTypeUID().getId().equals(CHANNEL_TYPE_CC)) {
+        // REFRESH makes sense only for CC and SS channels because we can query the device for the relay or sensor state
+        if (channel.getChannelTypeUID().getId().equals(CHANNEL_TYPE_CC)
+                || channel.getChannelTypeUID().getId().equals(CHANNEL_TYPE_SS)) {
             logger.debug("Handle REFRESH command on channel {} for thing {}", channel.getUID().getId(), thingID());
 
             CommandGetstate getstate = new CommandGetstate(thing, sendQueue, modNum, conNum);
@@ -677,6 +747,7 @@ public class GlobalCacheHandler extends BaseThingHandler {
              */
             markThingOnline();
             deviceIsConnected = true;
+            // TODO: re-configure sensor notifications if enabled
             startSerialPortReaders();
         }
 

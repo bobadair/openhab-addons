@@ -283,4 +283,89 @@
 			</channel>
 		</channels>
 	</channel-group-type>
+
+	<channel-group-type id="flex-cc-m1">
+		<label>Module 1</label>
+		<description>Contact Closure Module</description>
+		<channels>
+			<channel id="c1" typeId="channel-type-cc">
+				<label>Connector 1</label>
+				<description>Contact closure on connector 1.</description>
+				<properties>
+					<property name="module">1</property>
+					<property name="connector">1</property>
+				</properties>
+			</channel>
+
+			<channel id="c2" typeId="channel-type-cc">
+				<label>Connector 2</label>
+				<description>Contact closure on connector 2.</description>
+				<properties>
+					<property name="module">1</property>
+					<property name="connector">2</property>
+				</properties>
+			</channel>
+
+			<channel id="c3" typeId="channel-type-cc">
+				<label>Connector 3</label>
+				<description>Contact closure on connector 3.</description>
+				<properties>
+					<property name="module">1</property>
+					<property name="connector">3</property>
+				</properties>
+			</channel>
+
+			<channel id="c4" typeId="channel-type-cc">
+				<label>Connector 4</label>
+				<description>Contact closure on connector 4.</description>
+				<properties>
+					<property name="module">1</property>
+					<property name="connector">4</property>
+				</properties>
+			</channel>
+		</channels>
+	</channel-group-type>
+
+	<channel-group-type id="flex-ss-m2">
+		<label>Module 2</label>
+		<description>Sensor Module</description>
+		<channels>
+			<channel id="c1" typeId="channel-type-ss">
+				<label>Sensor 1</label>
+				<description>Sensor 1</description>
+				<properties>
+					<property name="module">2</property>
+					<property name="connector">1</property>
+				</properties>
+			</channel>
+
+			<channel id="c2" typeId="channel-type-ss">
+				<label>Sensor 2</label>
+				<description>Sensor 2</description>
+				<properties>
+					<property name="module">2</property>
+					<property name="connector">2</property>
+				</properties>
+			</channel>
+
+			<channel id="c3" typeId="channel-type-ss">
+				<label>Sensor 3</label>
+				<description>Sensor 3</description>
+				<properties>
+					<property name="module">2</property>
+					<property name="connector">3</property>
+				</properties>
+			</channel>
+
+			<channel id="c4" typeId="channel-type-ss">
+				<label>Sensor 4</label>
+				<description>Sensor 4</description>
+				<properties>
+					<property name="module">2</property>
+					<property name="connector">4</property>
+				</properties>
+			</channel>
+		</channels>
+	</channel-group-type>
+
 </thing:thing-descriptions>

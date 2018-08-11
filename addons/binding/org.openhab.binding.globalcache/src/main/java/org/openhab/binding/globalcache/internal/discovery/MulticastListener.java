@@ -61,16 +61,20 @@ public class MulticastListener {
     /*
      * Constructor joins the multicast group, throws IOException on failure.
      */
-    public MulticastListener(String ipv4Address) throws IOException, SocketException {
+    public MulticastListener(String ipv4Address, int portNumber) throws IOException, SocketException {
         InetAddress ifAddress = InetAddress.getByName(ipv4Address);
         logger.debug("Discovery job using address {} on network interface {}", ifAddress.getHostAddress(),
                 NetworkInterface.getByInetAddress(ifAddress).getName());
-        socket = new MulticastSocket(GC_MULTICAST_PORT);
+        socket = new MulticastSocket(portNumber);
         socket.setInterface(ifAddress);
         socket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
         InetAddress mcastAddress = InetAddress.getByName(GC_MULTICAST_GROUP);
         socket.joinGroup(mcastAddress);
         logger.debug("Multicast listener joined multicast group {}:{}", GC_MULTICAST_GROUP, GC_MULTICAST_PORT);
+    }
+
+    public MulticastListener(String ipv4Address) throws IOException, SocketException {
+        this(ipv4Address, GC_MULTICAST_PORT);
     }
 
     public void shutdown() {

@@ -67,6 +67,10 @@ public class GlobalCacheBindingConstants {
     public static final String ACTIVE_CABLE_SERIAL = "FLEX_SERIAL";
     public static final String ACTIVE_CABLE_RELAY = "FLEX_RELAY";
 
+    // Flex sensor update parameters
+    public static final String CONFIG_SENSOR_POLL_INTERVAL = "sensorPollInterval";
+    public static final String CONFIG_SENSOR_NOTIFY_PORT = "sensorNotifyPort";
+
     // Serial readers
     public static final String CONFIG_ENABLE_TWO_WAY_PORT_1 = "enableTwoWay1";
     public static final String CONFIG_END_OF_MESSAGE_DELIMITER_PORT_1 = "eomDelimiter1";
@@ -86,6 +90,7 @@ public class GlobalCacheBindingConstants {
     // GlobalCache Channel Types
     public static final String CHANNEL_TYPE_IR = "channel-type-ir";
     public static final String CHANNEL_TYPE_CC = "channel-type-cc";
+    public static final String CHANNEL_TYPE_SS = "channel-type-ss";
     public static final String CHANNEL_TYPE_SL = "channel-type-sl";
     public static final String CHANNEL_TYPE_SL_DIRECT = "channel-type-sl-direct";
     public static final String CHANNEL_TYPE_SL_FEEDBACK = "channel-type-sl-receive";

@@ -312,6 +312,18 @@ public abstract class AbstractCommand implements CommandInterface {
             return true;
         }
 
+        // Flex relay/sensor error replies are of the form ERR RSeee, where eee is the error number
+        pattern = Pattern.compile("ERR RS\\d\\d\\d");
+        matcher = pattern.matcher(reply);
+        if (matcher.find()) {
+            errorModule = "";
+            errorConnector = "";
+            errorCode = reply.substring(6);
+            errorMessage = lookupErrorMessage(errorCode, FLEX_RS_ERROR_MESSAGES);
+            logger.debug("Device reply indicates Flex RS error condition");
+            return true;
+        }
+
         errorCode = null;
         return false;
     }
@@ -513,6 +525,27 @@ public abstract class AbstractCommand implements CommandInterface {
             "Invalid flow control setting.",
             // 3
             "Invalid parity setting.",
+            //
+    };
+
+    /*
+     * Relay & Sensor errors returned by Flex devices
+     */
+    private static final String[] FLEX_RS_ERROR_MESSAGES = {
+            // 0
+            "Unknown error.",
+            // 1
+            "Invalid logical relay type.",
+            // 2
+            "Invalid logical relay state.",
+            // 3
+            "Unsupported operation.",
+            // 4
+            "Logical relay disabled or not available.",
+            // 5
+            "Invalid sensor notify port value.",
+            // 6
+            "Invalid sensor notify timer value."
             //
     };
 }

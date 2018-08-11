@@ -12,7 +12,8 @@
 		<channel-groups>
 			<channel-group id="sl-m1" typeId="sl-m1" />
 			<channel-group id="ir-m1" typeId="ir-m1" />
-			<channel-group id="cc-m1" typeId="cc-m1" />
+			<channel-group id="flex-cc-m1" typeId="flex-cc-m1" />
+			<channel-group id="flex-ss-m2" typeId="flex-ss-m2" />
 		</channel-groups>
 
 		<config-description>
@@ -36,6 +37,18 @@
 					<option value="FLEX_RELAY">Relay/Sensor</option>
 				</options>
 				<default>FLEX_INFRARED</default>
+			</parameter>
+
+			<parameter name="sensorPollInterval" type="integer" min="0" max="86400">
+				<label>Sensor Polling Interval</label>
+				<description>Interval in seconds at which sensors on Relay/Sensor cable should be polled (0=Polling off)</description>
+				<default>0</default>
+			</parameter>
+
+			<parameter name="sensorNotifyPort" type="integer" min="0" max="65535">
+				<label>Sensor Notification Multicast Port</label>
+				<description>UDP port number for multicast notifications of sensor status changes from Relay/Sensor cable (0=disabled)</description>
+				<default>0</default>
 			</parameter>
 
 			<parameter name="enableTwoWay1" type="boolean">

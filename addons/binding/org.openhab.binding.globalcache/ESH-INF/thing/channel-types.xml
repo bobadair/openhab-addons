@@ -17,6 +17,12 @@
 		<description>Transmits contact closure command on module:connector</description>
 	</channel-type>
 
+	<channel-type id="channel-type-ss">
+		<item-type>Contact</item-type>
+		<label>Sensor</label>
+		<description>Reads sensor status on module:connector</description>
+	</channel-type>
+
 	<channel-type id="channel-type-sl">
 		<item-type>String</item-type>
 		<label>Serial</label>
