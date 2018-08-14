@@ -12,6 +12,7 @@ This binding currently supports the following thing types:
 *   switch
 *   keypad
 *   occupancysensor
+*   shade
 
 ## Discovery
 
@@ -41,6 +42,19 @@ In the thing file, this looks e.g. like
 ```
 Thing lutron:dimmer:livingroom (lutron:ipbridge:radiora2) [ integrationId=8, fadeInTime=0.5, fadeOutTime=5 ]
 ```
+### Shades
+
+Lutron Sivoia QS shades are controlled by the “shade” thing.  The only configuration parameter it accepts is integrationId. 
+
+A single channel shadelevel with item type Rollershutter and category Rollershutter is created for each shade thing.   It accepts Percent, Up, Down, and Stop and Refresh commands.  Sending a Percent command will command the shade to immediately move to that percent open.  Delays are not currently supported. You can also get the current shade level from the channel, specified as a percentage, where 0% = closed and 100% = fully open.
+
+Note: While a shade is moving, the Lutron system will report the target level for the shade rather than the actual current level.
+
+Example:
+
+```
+Thing lutron:shade:libraryshade (lutron:ipbridge:radiora2) [ integrationId=33]
+```
 
 ## Channels
 
@@ -69,6 +83,7 @@ The following channels are supported:
 | keypad          | led5              | Switch    | LED indicator for the associated button |
 | keypad          | led6              | Switch    | LED indicator for the associated button |
 | keypad          | led7              | Switch    | LED indicator for the associated button |
+| shade           | shadelevel        | Rollershutter | Accepts Up, Down, Stop, & Percent   |
 
 Currently there is only one keypad thing type to cover all keypads.
 Not all channels will be available on all keypads.

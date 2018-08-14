@@ -27,12 +27,14 @@ public class LutronBindingConstants {
 
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_DIMMER = new ThingTypeUID(BINDING_ID, "dimmer");
+    public static final ThingTypeUID THING_TYPE_SHADE = new ThingTypeUID(BINDING_ID, "shade");
     public static final ThingTypeUID THING_TYPE_SWITCH = new ThingTypeUID(BINDING_ID, "switch");
     public static final ThingTypeUID THING_TYPE_OCCUPANCYSENSOR = new ThingTypeUID(BINDING_ID, "occupancysensor");
     public static final ThingTypeUID THING_TYPE_KEYPAD = new ThingTypeUID(BINDING_ID, "keypad");
 
     // List of all Channel ids
     public static final String CHANNEL_LIGHTLEVEL = "lightlevel";
+    public static final String CHANNEL_SHADELEVEL = "shadelevel";
     public static final String CHANNEL_SWITCH = "switchstatus";
     public static final String CHANNEL_OCCUPANCYSTATUS = "occupancystatus";
     public static final String CHANNEL_BUTTON1 = "button1";

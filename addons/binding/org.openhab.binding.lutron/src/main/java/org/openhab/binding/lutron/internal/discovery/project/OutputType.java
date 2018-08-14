@@ -16,5 +16,6 @@ package org.openhab.binding.lutron.internal.discovery.project;
 public enum OutputType {
     INC,
     MLV,
-    NON_DIM
+    NON_DIM,
+    SYSTEM_SHADE
 }

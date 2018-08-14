@@ -21,13 +21,14 @@ import org.openhab.binding.lutron.handler.DimmerHandler;
 import org.openhab.binding.lutron.handler.IPBridgeHandler;
 import org.openhab.binding.lutron.handler.KeypadHandler;
 import org.openhab.binding.lutron.handler.OccupancySensorHandler;
+import org.openhab.binding.lutron.handler.ShadeHandler;
 import org.openhab.binding.lutron.handler.SwitchHandler;
 import org.openhab.binding.lutron.internal.grxprg.GrafikEyeHandler;
 import org.openhab.binding.lutron.internal.grxprg.PrgBridgeHandler;
 import org.openhab.binding.lutron.internal.grxprg.PrgConstants;
 import org.openhab.binding.lutron.internal.radiora.RadioRAConstants;
-import org.openhab.binding.lutron.internal.radiora.handler.RS232Handler;
 import org.openhab.binding.lutron.internal.radiora.handler.PhantomButtonHandler;
+import org.openhab.binding.lutron.internal.radiora.handler.RS232Handler;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -41,7 +42,7 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
 
     // Used by LutronDeviceDiscoveryService to discover these types
     public static final Set<ThingTypeUID> DISCOVERABLE_DEVICE_TYPES_UIDS = ImmutableSet.of(THING_TYPE_DIMMER,
-            THING_TYPE_SWITCH, THING_TYPE_OCCUPANCYSENSOR, THING_TYPE_KEYPAD);
+            THING_TYPE_SHADE, THING_TYPE_SWITCH, THING_TYPE_OCCUPANCYSENSOR, THING_TYPE_KEYPAD);
 
     // Other types that can be initiated but not discovered
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = ImmutableSet.of(THING_TYPE_IPBRIDGE,
@@ -64,6 +65,8 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
             return new IPBridgeHandler((Bridge) thing);
         } else if (thingTypeUID.equals(THING_TYPE_DIMMER)) {
             return new DimmerHandler(thing);
+        } else if (thingTypeUID.equals(THING_TYPE_SHADE)) {
+            return new ShadeHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_SWITCH)) {
             return new SwitchHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_OCCUPANCYSENSOR)) {
