@@ -44,9 +44,9 @@ Thing lutron:dimmer:livingroom (lutron:ipbridge:radiora2) [ integrationId=8, fad
 ```
 ### Shades
 
-Lutron Sivoia QS shades are controlled by the “shade” thing.  The only configuration parameter it accepts is integrationId. 
+Each Lutron Sivoia QS shade is controlled by a “shade” thing.  The only configuration parameter it accepts is integrationId. 
 
-A single channel shadelevel with item type Rollershutter and category Rollershutter is created for each shade thing.   It accepts Percent, Up, Down, and Stop and Refresh commands.  Sending a Percent command will command the shade to immediately move to that percent open.  Delays are not currently supported. You can also get the current shade level from the channel, specified as a percentage, where 0% = closed and 100% = fully open.
+A single channel shadelevel with item type Rollershutter and category Rollershutter will be created for each shade thing.   It accepts Percent, Up, Down, Stop and Refresh commands.  Sending a Percent command will cause the shade to immediately move so as to be open the specified percentage.  You can also read the current shade level from the channel.  It is specified as a percentage, where 0% = closed and 100% = fully open. Movement delays are not currently supported.
 
 Note: While a shade is moving, the Lutron system will report the target level for the shade rather than the actual current level.
 
