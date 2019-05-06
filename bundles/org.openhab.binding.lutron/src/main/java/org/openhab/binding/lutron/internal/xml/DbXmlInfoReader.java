@@ -12,7 +12,9 @@
  */
 package org.openhab.binding.lutron.internal.xml;
 
-import org.eclipse.smarthome.config.xml.util.XmlDocumentReader;
+import java.io.File;
+import java.net.URL;
+
 import org.openhab.binding.lutron.internal.discovery.project.Area;
 import org.openhab.binding.lutron.internal.discovery.project.Component;
 import org.openhab.binding.lutron.internal.discovery.project.Device;
@@ -23,24 +25,38 @@ import org.openhab.binding.lutron.internal.discovery.project.Project;
 import org.openhab.binding.lutron.internal.discovery.project.Timeclock;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.ConversionException;
+import com.thoughtworks.xstream.io.xml.StaxDriver;
 
 /**
  * The {@link DbXmlInfoReader} reads Lutron XML project files and converts them to {@link Project}
  * objects describing the device things contained within the Lutron system.
  *
  * @author Allan Tong - Initial contribution
+ * @author Bob Adair - Added support for reading XML from a file. Requires using XStream directly
+ *         instead of XmlDocumentReader.
  */
-public class DbXmlInfoReader extends XmlDocumentReader<Project> {
+public class DbXmlInfoReader {
 
+    private XStream xstream;
+    
     public DbXmlInfoReader() {
-        super.setClassLoader(Project.class.getClassLoader());
+        StaxDriver driver = new StaxDriver();
+
+        xstream = new XStream(driver);
+        
+        setClassLoader(Project.class.getClassLoader());
+        registerConverters(this.xstream);
+        registerAliases(this.xstream);
     }
 
-    @Override
+    public void setClassLoader(ClassLoader classLoader) {
+        xstream.setClassLoader(classLoader);
+    }
+    
     public void registerConverters(XStream xstream) {
     }
 
-    @Override
     public void registerAliases(XStream xstream) {
         xstream.alias("Project", Project.class);
         xstream.aliasField("AppVer", Project.class, "appVersion");
@@ -101,4 +117,21 @@ public class DbXmlInfoReader extends XmlDocumentReader<Project> {
         // binding more tolerant of potential future changes to the XML schema.
         xstream.ignoreUnknownElements();
     }
+    
+    public Project readFromXML(URL xmlURL) throws ConversionException {
+        if (xmlURL != null) {
+            return (Project) xstream.fromXML(xmlURL);
+        }
+
+        return null;
+    }
+    
+    public Project readFromXML(File xmlFile) throws ConversionException {
+        if (xmlFile != null) {
+            return (Project) xstream.fromXML(xmlFile);
+        }
+
+        return null;
+    }
+    
 }

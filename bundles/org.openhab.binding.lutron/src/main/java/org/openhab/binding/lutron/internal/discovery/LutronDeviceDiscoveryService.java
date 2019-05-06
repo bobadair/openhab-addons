@@ -14,6 +14,7 @@ package org.openhab.binding.lutron.internal.discovery;
 
 import static org.openhab.binding.lutron.internal.LutronBindingConstants.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
+import org.openhab.binding.lutron.internal.IPBridgeType;
 import org.openhab.binding.lutron.internal.LutronHandlerFactory;
 import org.openhab.binding.lutron.internal.discovery.project.Area;
 import org.openhab.binding.lutron.internal.discovery.project.Device;
@@ -67,29 +69,43 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
 
     @Override
     protected synchronized void startScan() {
-        if (this.scanTask == null || this.scanTask.isDone()) {
-            this.scanTask = scheduler.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        readDeviceDatabase();
-                    } catch (Exception e) {
-                        logger.error("Error scanning for devices", e);
-
-                        if (scanListener != null) {
-                            scanListener.onErrorOccurred(e);
-                        }
-                    }
-                }
-            }, 0, TimeUnit.SECONDS);
+        if (bridgeHandler.getBridgeType() == IPBridgeType.RA2 || bridgeHandler.getBridgeType() == IPBridgeType.HWQS) {
+            if (scanTask == null || this.scanTask.isDone()) {
+                scanTask = scheduler.schedule(this::asyncDiscoveryTask, 0, TimeUnit.SECONDS);
+            }
         }
     }
 
-    private void readDeviceDatabase() throws IOException {
-        String address = "http://" + this.bridgeHandler.getIPBridgeConfig().getIpAddress() + "/DbXmlInfo.xml";
-        URL dbXmlInfoUrl = new URL(address);
+    private synchronized void asyncDiscoveryTask () {
+        try {
+            readDeviceDatabase();
+        } catch (Exception e) {
+            logger.warn("Error scanning for devices: {}", e.getMessage());
 
-        Project project = this.dbXmlInfoReader.readFromXML(dbXmlInfoUrl);
+            if (scanListener != null) {
+                scanListener.onErrorOccurred(e); // TODO: Change to .onFinished()
+            }
+        }
+    }
+    
+    private void readDeviceDatabase() throws IOException {
+        Project project = null;
+        String discFileName = bridgeHandler.getIPBridgeConfig().getDiscoveryFile();
+        String address = "http://" + bridgeHandler.getIPBridgeConfig().getIpAddress() + "/DbXmlInfo.xml";
+        
+        if (discFileName == null || discFileName.isEmpty()) {
+            URL dbXmlInfoUrl = new URL(address);
+            project = dbXmlInfoReader.readFromXML(dbXmlInfoUrl);
+            if (project == null) {
+                logger.info("Could not process XML project file from {}", address);
+            }
+        } else {
+            File xmlFile = new File(discFileName);
+            project = dbXmlInfoReader.readFromXML(xmlFile);
+            if (project == null) {
+                logger.info("Could not process XML project file {}", discFileName);
+            }
+        }
 
         if (project != null) {
             Stack<String> locationContext = new Stack<>();
@@ -103,8 +119,6 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
             for (GreenMode greenMode : project.getGreenModes()) {
                 processGreenModes(greenMode, locationContext);
             }
-        } else {
-            logger.info("Could not read project file at {}", address);
         }
     }
 
@@ -186,6 +200,7 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
             switch (type) {
                 case INC:
                 case MLV:
+                case ELV:
                 case ECO_SYSTEM_FLUORESCENT:
                 case FLUORESCENT_DB:
                 case ZERO_TO_TEN:

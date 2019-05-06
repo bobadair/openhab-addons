@@ -63,6 +63,12 @@ public class LutronBindingConstants {
     public static final String USER = "user";
     public static final String PASSWORD = "password";
     public static final String SERIAL_NUMBER = "serialNumber";
+    public static final String DISCOVERY_FILE = "discoveryFile";
+    public static final String BRIDGE_TYPE = "bridgeType";
+    
+    public static final String BRIDGE_TYPE_RA2 = "RA2";
+    public static final String BRIDGE_TYPE_CASETA = "CASETA";
+    public static final String BRIDGE_TYPE_HWQS = "HWQS";
 
     // Thing config properties
     public static final String INTEGRATION_ID = "integrationId";
