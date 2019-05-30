@@ -39,15 +39,13 @@ This binding currently supports the following thing types:
 
 ## Discovery
 
-Full discovery is supported for RadioRA 2 systems.
-Both the main repeaters themselves and the devices connected to them can be automatically discovered.
+Full discovery is supported for RadioRA 2 and HomeWorks QS systems.
+Both the main repeaters/processors themselves and the devices connected to them can be automatically discovered.
 Caseta hubs will be discovered via mDNS, but the devices connected to them will not yet be automatically discovered.
 They must be configured manually.
-HomeWorks QS discovery is not yet supported.
-The processor and configured devices must be configured manually.
 
-Discovered hubs/repeaters will be accessed using the default integration credentials.
-These can be changed in the main repeater thing configuration.
+Discovered hubs/repeaters/processors will be accessed using the default integration credentials.
+These can be changed in the bridge thing configuration.
 
 ## Binding Configuration
 
@@ -64,8 +62,8 @@ If a thing will not come online, but instead has the status "UNKNOWN: Awaiting i
 A bridge may currently be a RadioRA 2 main repeater, a Caseta Smart Bridge Pro, or a HomeWorks QS Processor.
 The bridge configuration requires the IP address of the bridge as well as the telnet username and password to log in to the bridge.
 
-The optional parameter `bridgeType` can be set to "RA2", "HWQS", or "CASETA".
-It defaults to "RA2".
+The optional parameter `bridgeType` should be set to "RA2", "HWQS", or "CASETA" as appropriate.
+It defaults to "RA2" if not set.
 
 The optional advanced parameter `heartbeat` can be used to set the interval between connection keepalive heartbeat messages, in minutes.
 It defaults to 5.
