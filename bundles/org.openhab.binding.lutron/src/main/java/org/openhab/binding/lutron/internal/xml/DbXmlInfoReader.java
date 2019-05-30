@@ -13,6 +13,7 @@
 package org.openhab.binding.lutron.internal.xml;
 
 import java.io.File;
+import java.io.Reader;
 import java.net.URL;
 
 import org.openhab.binding.lutron.internal.discovery.project.Area;
@@ -46,7 +47,6 @@ public class DbXmlInfoReader {
         xstream = new XStream(driver);
         
         setClassLoader(Project.class.getClassLoader());
-        registerConverters(this.xstream);
         registerAliases(this.xstream);
     }
 
@@ -54,9 +54,6 @@ public class DbXmlInfoReader {
         xstream.setClassLoader(classLoader);
     }
     
-    public void registerConverters(XStream xstream) {
-    }
-
     public void registerAliases(XStream xstream) {
         xstream.alias("Project", Project.class);
         xstream.aliasField("AppVer", Project.class, "appVersion");
@@ -134,4 +131,19 @@ public class DbXmlInfoReader {
         return null;
     }
     
+    public Project readFromXML(Reader xmlReader) throws ConversionException {
+        if (xmlReader != null) {
+            return (Project) xstream.fromXML(xmlReader);
+        }
+
+        return null;
+    }
+    
+    public Project readFromXML(String xmlString) throws ConversionException {
+        if (xmlString != null) {
+            return (Project) xstream.fromXML(xmlString);
+        }
+
+        return null;
+    }
 }
