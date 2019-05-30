@@ -29,6 +29,7 @@ This binding currently supports the following thing types:
 * **occupancysensor** - Occupancy/vacancy sensor
 * **keypad** - Lutron seeTouch or Hybrid seeTouch Keypad
 * **ttkeypad** - Tabletop seeTouch Keypad
+* **qsikeypad** - QS International seeTouch Keypad
 * **pico** - Pico Keypad
 * **virtualkeypad** - Repeater virtual keypad
 * **vcrx** - Visor control receiver module (VCRX)
@@ -172,6 +173,28 @@ Example:
 
 ```
 Thing lutron:ttkeypad:bedroomkeypad (lutron:ipbridge:radiora2) [ integrationId=11, model="T10RL" autorelease="true" ]
+```
+
+### QS International SeeTouch Keypads (Homeworks QS)
+
+QS International SeeTouch keypads used in the Homeworks QS system use the **qsikeypad** thing.
+It accepts the same `integrationID`, `model`, and `autorelease` parameters and creates the same button and led channel types as the **keypad** thing.
+See the **keypad** section above for a full discussion of configuration and use.
+
+If using auto-discovery (which is a work in progress on Homeworks QS), remember to select the correct value for the `model` parameter after accepting the **qsikeypad** thing from the inbox.
+The correct channels will then be automatically configured.
+
+To support this keypad's contact closure inputs, CCI channels named *cci1* and *cci2* are created with item type Contact and category Switch.
+They are marked as Advanced, so they will not be automatically linked to items in the Paper UI's Simple Mode.
+They accept ON/OFF commands and present ON/OFF states the same as a keypad button.
+Note that the `autorelease` option also applies to CCI channels.
+
+Supported settings for `model` parameter: 2B, 3B, 4B, 5BRL, 6BRL, 7BRL, 8BRL, 10BRL / Generic (default)
+
+Example:
+
+```
+Thing lutron:qsikeypad:kitchenkeypad (lutron:ipbridge:radiora2) [ integrationId=15, model="10BRL" autorelease="true" ]
 ```
 
 ### Pico Keypads
@@ -352,8 +375,8 @@ The following is a summary of channels for all RadioRA2 binding things:
 | timeclock           | enableevent       | Number        | Enable event or monitor events enabled       |
 | timeclock           | disableevent      | Number        | Disable event or monitor events disabled     |
 
-The channels available on each keypad device (i.e. keypad, ttkeypad, pico, vcrx, and virtualkeypad) will vary with keypad type and model.
-Appropriate channels will be created automatically by the keypad, ttkeypad, and pico handlers based on the setting of the `model` parameter for those thing types.
+The channels available on each keypad device (i.e. keypad, ttkeypad, qsikeypad, pico, vcrx, and virtualkeypad) will vary with keypad type and model.
+Appropriate channels will be created automatically by the keypad, ttkeypad, qsikeypad, and pico handlers based on the setting of the `model` parameter for those thing types.
 
 ### Commands supported by channels
 
