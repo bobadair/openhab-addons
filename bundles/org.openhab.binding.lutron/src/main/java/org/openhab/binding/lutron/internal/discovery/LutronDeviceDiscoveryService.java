@@ -14,15 +14,25 @@ package org.openhab.binding.lutron.internal.discovery;
 
 import static org.openhab.binding.lutron.internal.LutronBindingConstants.*;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
 import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
@@ -54,17 +64,23 @@ import org.slf4j.LoggerFactory;
  */
 public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
 
+    private static final String XML_DECLARATION_START = "<?xml";
+    private static final int DECLARATION_MAX_LEN = 80;
+
     private final Logger logger = LoggerFactory.getLogger(LutronDeviceDiscoveryService.class);
 
     private IPBridgeHandler bridgeHandler;
     private DbXmlInfoReader dbXmlInfoReader = new DbXmlInfoReader();
+    
+    private HttpClient httpClient;
 
     private ScheduledFuture<?> scanTask;
 
-    public LutronDeviceDiscoveryService(IPBridgeHandler bridgeHandler) throws IllegalArgumentException {
+    public LutronDeviceDiscoveryService(IPBridgeHandler bridgeHandler, HttpClient httpClient) throws IllegalArgumentException {
         super(LutronHandlerFactory.DISCOVERABLE_DEVICE_TYPES_UIDS, 10);
 
         this.bridgeHandler = bridgeHandler;
+        this.httpClient = httpClient;
     }
 
     @Override
@@ -92,18 +108,49 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
         Project project = null;
         String discFileName = bridgeHandler.getIPBridgeConfig().getDiscoveryFile();
         String address = "http://" + bridgeHandler.getIPBridgeConfig().getIpAddress() + "/DbXmlInfo.xml";
+        ContentResponse response = null;
         
         if (discFileName == null || discFileName.isEmpty()) {
-            URL dbXmlInfoUrl = new URL(address);
-            project = dbXmlInfoReader.readFromXML(dbXmlInfoUrl);
+            logger.trace("Sending http request");
+            try {
+                response = httpClient.newRequest(address)
+                        .method(HttpMethod.GET)
+                        .timeout(30, TimeUnit.SECONDS)
+                        .header(HttpHeader.ACCEPT, "text/html")
+                        .header(HttpHeader.ACCEPT_CHARSET, "utf-8")
+                        .header(HttpHeader.ACCEPT_ENCODING, "identity")
+                        .send();  
+            } catch (InterruptedException | TimeoutException | ExecutionException e) {
+                logger.info("Exception while making HTTP request: {}",e.getMessage());
+            }
+            //TODO - Change to async response processing using stream
+
+            String xmlDocString = response.getContentAsString();
+            StringReader xmlStringReader = new StringReader(xmlDocString);
+            BufferedReader xmlBufReader = new BufferedReader(xmlStringReader);
+            flushPrePrologLines(xmlBufReader);
+            //TODO - Clean up resources and do exception handling for all of these
+            
+            project = dbXmlInfoReader.readFromXML(xmlBufReader);
             if (project == null) {
                 logger.info("Could not process XML project file from {}", address);
             }
         } else {
             File xmlFile = new File(discFileName);
-            project = dbXmlInfoReader.readFromXML(xmlFile);
-            if (project == null) {
-                logger.info("Could not process XML project file {}", discFileName);
+            
+            //Path filePath = xmlFile.toPath();
+            //BufferedReader xmlReader = Files.newBufferedReader(xmlFile.toPath(), StandardCharsets.UTF_8);
+                        
+            try (BufferedReader xmlReader = Files.newBufferedReader(xmlFile.toPath(), StandardCharsets.UTF_8)) {
+                
+                flushPrePrologLines(xmlReader);
+                
+                project = dbXmlInfoReader.readFromXML(xmlReader);
+                if (project == null) {
+                    logger.info("Could not process XML project file {}", discFileName);
+                }
+            } catch (IOException e) {
+                logger.debug("IOException: ", e);
             }
         }
 
@@ -122,6 +169,22 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
         }
     }
 
+    private void flushPrePrologLines(BufferedReader xmlReader) throws IOException {
+        String inLine = null;
+        xmlReader.mark(DECLARATION_MAX_LEN);
+        Boolean foundXmlDec = false;
+
+        while (!foundXmlDec && (inLine = xmlReader.readLine()) != null) {
+            if (inLine.startsWith(XML_DECLARATION_START)) {
+                foundXmlDec = true;
+                xmlReader.reset();
+            } else {
+                logger.trace("discarding line: {}", inLine);
+                xmlReader.mark(DECLARATION_MAX_LEN);
+            }
+        }
+    }
+    
     private void processArea(Area area, Stack<String> context) {
         context.push(area.getName());
 
