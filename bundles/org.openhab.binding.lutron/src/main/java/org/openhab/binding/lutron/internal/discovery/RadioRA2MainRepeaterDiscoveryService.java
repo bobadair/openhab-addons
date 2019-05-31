@@ -54,6 +54,8 @@ public class RadioRA2MainRepeaterDiscoveryService extends AbstractDiscoveryServi
     private static final byte[] QUERY_DATA = "<LUTRON=1>".getBytes(StandardCharsets.US_ASCII);
     private static final int QUERY_DEST_PORT = 2647;
     private static final Pattern BRIDGE_PROP_PATTERN = Pattern.compile("<([^=>]+)=([^>]*)>");
+    //private static final String PRODFAM_RA2 = "RadioRA2";
+    private static final String PRODFAM_HWQS = "Gulliver";
 
     private static final String DEFAULT_LABEL = "RadioRA2 MainRepeater";
 
@@ -143,7 +145,7 @@ public class RadioRA2MainRepeaterDiscoveryService extends AbstractDiscoveryServi
 
                         logger.info("Main repeater scan interrupted");
                     } catch (SocketTimeoutException e) {
-                        logger.debug("Timed out waiting for response; presumably all repeaters have already responded");
+                        logger.trace("Timed out waiting for response; presumably all repeaters have already responded");
                     }
                 } finally {
                     socket.leaveGroup(group);
@@ -163,6 +165,7 @@ public class RadioRA2MainRepeaterDiscoveryService extends AbstractDiscoveryServi
 
             while (matcher.find()) {
                 bridgeProperties.put(matcher.group(1), matcher.group(2));
+                logger.trace("Bridge property: {} : {}", matcher.group(1), matcher.group(2));
             }
 
             String ipAddress = bridgeProperties.get("IPADDR");
@@ -175,6 +178,12 @@ public class RadioRA2MainRepeaterDiscoveryService extends AbstractDiscoveryServi
 
                 properties.put(HOST, ipAddress);
                 properties.put(SERIAL_NUMBER, serialNumber);
+                
+                if (productFamily != null && productFamily.equalsIgnoreCase(PRODFAM_HWQS)) {
+                    properties.put(BRIDGE_TYPE, BRIDGE_TYPE_HWQS);
+                } else {
+                    properties.put(BRIDGE_TYPE, BRIDGE_TYPE_RA2); // default to RA2
+                }
 
                 ThingUID uid = new ThingUID(THING_TYPE_IPBRIDGE, serialNumber);
                 String label = generateLabel(productFamily, productType);
@@ -183,7 +192,7 @@ public class RadioRA2MainRepeaterDiscoveryService extends AbstractDiscoveryServi
 
                 thingDiscovered(result);
 
-                logger.debug("Discovered main repeater {}", uid);
+                logger.debug("Discovered Lutron bridge device {}", uid);
             }
         }
 

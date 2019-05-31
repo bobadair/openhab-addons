@@ -12,6 +12,7 @@
  */
 package org.openhab.binding.lutron.internal.config;
 
+import static org.openhab.binding.lutron.internal.LutronBindingConstants.BRIDGE_TYPE_RA2;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -21,9 +22,13 @@ import org.apache.commons.lang.StringUtils;
  * @author Bob Adair - Added reconnect and heartbeat parameters
  */
 public class IPBridgeConfig {
+    private static final String DEFAULT_BRIDGE_TYPE = BRIDGE_TYPE_RA2;
+    
     private String ipAddress;
     private String user;
     private String password;
+    private String discoveryFile;
+    private String bridgeType = new String(DEFAULT_BRIDGE_TYPE);
     private int reconnect;
     private int heartbeat;
 
@@ -55,6 +60,22 @@ public class IPBridgeConfig {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getDiscoveryFile() {
+        return discoveryFile;
+    }
+
+    public void setDiscoveryFile(String discoveryFile) {
+        this.discoveryFile = discoveryFile;
+    }
+
+    public String getBridgeType() {
+        return bridgeType;
+    }
+    
+    public void setBridgeType(String bridgeType) {
+        this.bridgeType = bridgeType;
     }
 
     public int getReconnect() {
