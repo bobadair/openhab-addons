@@ -24,6 +24,7 @@ public enum OutputType {
     CCO_PULSED,
     CEILING_FAN_TYPE,
     ECO_SYSTEM_FLUORESCENT,
+    ELV,
     FLUORESCENT_DB,
     INC,
     MLV,
