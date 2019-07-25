@@ -20,7 +20,7 @@ package org.openhab.binding.threadtestnew.internal;
 public class ThreadTestNewConfiguration {
 
     /**
-     * Sample configuration parameter. Replace with your own.
+     * keepalive interval in seconds
      */
-    public String config1;
+    public int interval = 30;
 }
