@@ -106,6 +106,7 @@ public class DimmerHandler extends LutronHandler {
 
     @Override
     public void handleUpdate(LutronCommandType type, String... parameters) {
+        logger.trace("handleUpdate: {} {}", type, parameters);
         if (type == LutronCommandType.OUTPUT && parameters.length > 1
                 && ACTION_ZONELEVEL.toString().equals(parameters[0])) {
             BigDecimal level = new BigDecimal(parameters[1]);
