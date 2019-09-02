@@ -77,6 +77,10 @@ Note that the handler will wait up to 30 seconds for a heartbeat response before
 The optional advanced parameter `reconnect` can be used to set the connection retry interval, in minutes.
 It also defaults to 5.
 
+The optional advanced parameter `delay` can be used to set a delay (in milliseconds) between transmitting integration commands.
+This is used for send rate throttling.
+It can be set to 0-250 ms and defaults to 0.
+
 The optional advanced parameter `discoveryFile` can be set to force the device discovery service to read the Lutron configuration XML from a local file rather than retrieving it via HTTP from the RadioRA 2 or HomeWorks QS bridge device.
 This is useful in the case of some older Lutron software versions, where the discovery service may have problems retrieving the file from the bridge device.
 Note that the user which openHAB runs under must have permission to read the file.
