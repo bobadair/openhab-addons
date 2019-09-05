@@ -22,6 +22,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
@@ -44,6 +46,8 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.lutron.internal.LutronHandlerFactory;
 import org.openhab.binding.lutron.internal.discovery.project.Area;
+import org.openhab.binding.lutron.internal.discovery.project.Component;
+import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
 import org.openhab.binding.lutron.internal.discovery.project.Device;
 import org.openhab.binding.lutron.internal.discovery.project.DeviceGroup;
 import org.openhab.binding.lutron.internal.discovery.project.DeviceNode;
@@ -260,6 +264,11 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
 
                 case SEETOUCH_KEYPAD:
                 case HYBRID_SEETOUCH_KEYPAD:
+                    List<Integer> buttons = getComponentList(device.getComponents(), ComponentType.BUTTON);
+                    List<Integer> leds = getComponentList(device.getComponents(), ComponentType.LED);
+                    List<Integer> ccis = getComponentList(device.getComponents(), ComponentType.CCI);
+                    logger.debug("Found seeTouch Keypad {} with buttons: {} leds: {} ccis: {}",
+                            device.getIntegrationId(), buttons, leds, ccis);
                     notifyDiscovery(THING_TYPE_KEYPAD, device.getIntegrationId(), label);
                     break;
 
@@ -294,6 +303,16 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
         } else {
             logger.warn("Unrecognized device type {}", device.getType());
         }
+    }
+
+    private List<Integer> getComponentList(List<Component> clist, ComponentType ctype) {
+        List<Integer> returnList = new LinkedList<>();
+        for (Component c : clist) {
+            if (c.getComponentType() == ctype) {
+                returnList.add(c.getComponentNumber());
+            }
+        }
+        return returnList;
     }
 
     private void processOutput(Output output, Stack<String> context) {

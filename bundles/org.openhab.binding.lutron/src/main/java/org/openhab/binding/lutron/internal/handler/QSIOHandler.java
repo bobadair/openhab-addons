@@ -16,6 +16,7 @@ import java.util.Arrays;
 
 import org.eclipse.smarthome.core.thing.Thing;
 import org.openhab.binding.lutron.internal.KeypadComponent;
+import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,20 +28,22 @@ import org.slf4j.LoggerFactory;
 public class QSIOHandler extends BaseKeypadHandler {
 
     private static enum Component implements KeypadComponent {
-        CCI1(1, "cci1", "CCI 1"),
-        CCI2(2, "cci2", "CCI 2"),
-        CCI3(3, "cci3", "CCI 3"),
-        CCI4(4, "cci4", "CCI 4"),
-        CCI5(5, "cci5", "CCI 5");
+        CCI1(1, "cci1", "CCI 1", ComponentType.CCI),
+        CCI2(2, "cci2", "CCI 2", ComponentType.CCI),
+        CCI3(3, "cci3", "CCI 3", ComponentType.CCI),
+        CCI4(4, "cci4", "CCI 4", ComponentType.CCI),
+        CCI5(5, "cci5", "CCI 5", ComponentType.CCI);
 
         private final int id;
         private final String channel;
         private final String description;
+        private final ComponentType type;
 
-        Component(int id, String channel, String description) {
+        Component(int id, String channel, String description, ComponentType type) {
             this.id = id;
             this.channel = channel;
             this.description = description;
+            this.type = type;
         }
 
         @Override
@@ -58,6 +61,10 @@ public class QSIOHandler extends BaseKeypadHandler {
             return this.description;
         }
 
+        @Override
+        public ComponentType type() {
+            return type;
+        }
     }
 
     private final Logger logger = LoggerFactory.getLogger(QSIOHandler.class);

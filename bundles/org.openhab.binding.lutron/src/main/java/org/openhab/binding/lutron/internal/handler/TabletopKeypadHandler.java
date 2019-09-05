@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.eclipse.smarthome.core.thing.Thing;
 import org.openhab.binding.lutron.internal.KeypadComponent;
+import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,59 +30,61 @@ import org.slf4j.LoggerFactory;
 public class TabletopKeypadHandler extends BaseKeypadHandler {
 
     private static enum Component implements KeypadComponent {
-        BUTTON1(1, "button1", "Button 1"),
-        BUTTON2(2, "button2", "Button 2"),
-        BUTTON3(3, "button3", "Button 3"),
-        BUTTON4(4, "button4", "Button 4"),
-        BUTTON5(5, "button5", "Button 5"),
-        BUTTON6(6, "button6", "Button 6"),
-        BUTTON7(7, "button7", "Button 7"),
-        BUTTON8(8, "button8", "Button 8"),
-        BUTTON9(9, "button9", "Button 9"),
-        BUTTON10(10, "button10", "Button 10"),
-        BUTTON11(11, "button11", "Button 11"),
-        BUTTON12(12, "button12", "Button 12"),
-        BUTTON13(13, "button13", "Button 13"),
-        BUTTON14(14, "button14", "Button 14"),
-        BUTTON15(15, "button15", "Button 15"),
+        BUTTON1(1, "button1", "Button 1", ComponentType.BUTTON),
+        BUTTON2(2, "button2", "Button 2", ComponentType.BUTTON),
+        BUTTON3(3, "button3", "Button 3", ComponentType.BUTTON),
+        BUTTON4(4, "button4", "Button 4", ComponentType.BUTTON),
+        BUTTON5(5, "button5", "Button 5", ComponentType.BUTTON),
+        BUTTON6(6, "button6", "Button 6", ComponentType.BUTTON),
+        BUTTON7(7, "button7", "Button 7", ComponentType.BUTTON),
+        BUTTON8(8, "button8", "Button 8", ComponentType.BUTTON),
+        BUTTON9(9, "button9", "Button 9", ComponentType.BUTTON),
+        BUTTON10(10, "button10", "Button 10", ComponentType.BUTTON),
+        BUTTON11(11, "button11", "Button 11", ComponentType.BUTTON),
+        BUTTON12(12, "button12", "Button 12", ComponentType.BUTTON),
+        BUTTON13(13, "button13", "Button 13", ComponentType.BUTTON),
+        BUTTON14(14, "button14", "Button 14", ComponentType.BUTTON),
+        BUTTON15(15, "button15", "Button 15", ComponentType.BUTTON),
 
-        BUTTON16(16, "button16", "Button 16"),
-        BUTTON17(17, "button17", "Button 17"),
+        BUTTON16(16, "button16", "Button 16", ComponentType.BUTTON),
+        BUTTON17(17, "button17", "Button 17", ComponentType.BUTTON),
 
-        LOWER1(20, "buttonlower1", "Lower button 1"),
-        RAISE1(21, "buttonraise1", "Raise button 1"),
-        LOWER2(22, "buttonlower2", "Lower button 2"),
-        RAISE2(23, "buttonraise2", "Raise button 2"),
-        LOWER3(24, "buttonlower3", "Lower button 3"),
-        RAISE3(25, "buttonraise3", "Raise button 3"),
+        LOWER1(20, "buttonlower1", "Lower button 1", ComponentType.BUTTON),
+        RAISE1(21, "buttonraise1", "Raise button 1", ComponentType.BUTTON),
+        LOWER2(22, "buttonlower2", "Lower button 2", ComponentType.BUTTON),
+        RAISE2(23, "buttonraise2", "Raise button 2", ComponentType.BUTTON),
+        LOWER3(24, "buttonlower3", "Lower button 3", ComponentType.BUTTON),
+        RAISE3(25, "buttonraise3", "Raise button 3", ComponentType.BUTTON),
 
-        LED1(81, "led1", "LED 1"),
-        LED2(82, "led2", "LED 2"),
-        LED3(83, "led3", "LED 3"),
-        LED4(84, "led4", "LED 4"),
-        LED5(85, "led5", "LED 5"),
-        LED6(86, "led6", "LED 6"),
-        LED7(87, "led7", "LED 7"),
-        LED8(88, "led8", "LED 8"),
-        LED9(89, "led9", "LED 9"),
-        LED10(90, "led10", "LED 10"),
-        LED11(91, "led11", "LED 11"),
-        LED12(92, "led12", "LED 12"),
-        LED13(93, "led13", "LED 13"),
-        LED14(94, "led14", "LED 14"),
-        LED15(95, "led15", "LED 15"),
+        LED1(81, "led1", "LED 1", ComponentType.LED),
+        LED2(82, "led2", "LED 2", ComponentType.LED),
+        LED3(83, "led3", "LED 3", ComponentType.LED),
+        LED4(84, "led4", "LED 4", ComponentType.LED),
+        LED5(85, "led5", "LED 5", ComponentType.LED),
+        LED6(86, "led6", "LED 6", ComponentType.LED),
+        LED7(87, "led7", "LED 7", ComponentType.LED),
+        LED8(88, "led8", "LED 8", ComponentType.LED),
+        LED9(89, "led9", "LED 9", ComponentType.LED),
+        LED10(90, "led10", "LED 10", ComponentType.LED),
+        LED11(91, "led11", "LED 11", ComponentType.LED),
+        LED12(92, "led12", "LED 12", ComponentType.LED),
+        LED13(93, "led13", "LED 13", ComponentType.LED),
+        LED14(94, "led14", "LED 14", ComponentType.LED),
+        LED15(95, "led15", "LED 15", ComponentType.LED),
 
-        LED16(96, "led16", "LED 16"),
-        LED17(97, "led17", "LED 17");
+        LED16(96, "led16", "LED 16", ComponentType.LED),
+        LED17(97, "led17", "LED 17", ComponentType.LED);
 
         private final int id;
         private final String channel;
         private final String description;
+        private final ComponentType type;
 
-        Component(int id, String channel, String description) {
+        Component(int id, String channel, String description, ComponentType type) {
             this.id = id;
             this.channel = channel;
             this.description = description;
+            this.type = type;
         }
 
         @Override
@@ -99,6 +102,10 @@ public class TabletopKeypadHandler extends BaseKeypadHandler {
             return description;
         }
 
+        @Override
+        public ComponentType type() {
+            return type;
+        }
     }
 
     private static final List<Component> buttonGroup1 = Arrays.asList(Component.BUTTON1, Component.BUTTON2,

@@ -16,6 +16,7 @@ import java.util.Arrays;
 
 import org.eclipse.smarthome.core.thing.Thing;
 import org.openhab.binding.lutron.internal.KeypadComponent;
+import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,27 +29,29 @@ public class PicoKeypadHandler extends BaseKeypadHandler {
 
     private static enum Component implements KeypadComponent {
         // Buttons for 2B, 2BRL, 3B, and 3BRL models
-        BUTTON1(2, "button1", "Button 1"),
-        BUTTON2(3, "button2", "Button 2"),
-        BUTTON3(4, "button3", "Button 3"),
+        BUTTON1(2, "button1", "Button 1", ComponentType.BUTTON),
+        BUTTON2(3, "button2", "Button 2", ComponentType.BUTTON),
+        BUTTON3(4, "button3", "Button 3", ComponentType.BUTTON),
 
-        RAISE(5, "buttonraise", "Raise Button"),
-        LOWER(6, "buttonlower", "Lower Button"),
+        RAISE(5, "buttonraise", "Raise Button", ComponentType.BUTTON),
+        LOWER(6, "buttonlower", "Lower Button", ComponentType.BUTTON),
 
         // Buttons for PJ2-4B model
-        BUTTON1_4B(8, "button01", "Button 1"),
-        BUTTON2_4B(9, "button02", "Button 2"),
-        BUTTON3_4B(10, "button03", "Button 3"),
-        BUTTON4_4B(11, "button04", "Button 4");
+        BUTTON1_4B(8, "button01", "Button 1", ComponentType.BUTTON),
+        BUTTON2_4B(9, "button02", "Button 2", ComponentType.BUTTON),
+        BUTTON3_4B(10, "button03", "Button 3", ComponentType.BUTTON),
+        BUTTON4_4B(11, "button04", "Button 4", ComponentType.BUTTON);
 
         private final int id;
         private final String channel;
         private final String description;
+        private final ComponentType type;
 
-        Component(int id, String channel, String description) {
+        Component(int id, String channel, String description, ComponentType type) {
             this.id = id;
             this.channel = channel;
             this.description = description;
+            this.type = type;
         }
 
         @Override
@@ -64,6 +67,11 @@ public class PicoKeypadHandler extends BaseKeypadHandler {
         @Override
         public String description() {
             return description;
+        }
+
+        @Override
+        public ComponentType type() {
+            return type;
         }
     }
 
