@@ -14,7 +14,6 @@ package org.openhab.binding.lutron.internal.handler;
 
 import org.eclipse.smarthome.core.thing.Thing;
 import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
-import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfig;
 import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfigSeetouch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,23 +27,6 @@ import org.slf4j.LoggerFactory;
 public class KeypadHandler extends BaseKeypadHandler {
 
     private final Logger logger = LoggerFactory.getLogger(KeypadHandler.class);
-
-    private KeypadConfig kp = new KeypadConfigSeetouch();
-
-    @Override
-    protected boolean isLed(int id) {
-        return kp.isLed(id);
-    }
-
-    @Override
-    protected boolean isButton(int id) {
-        return kp.isButton(id);
-    }
-
-    @Override
-    protected boolean isCCI(int id) {
-        return kp.isCCI(id);
-    }
 
     @Override
     protected void configureComponents(String model) {
@@ -120,6 +102,7 @@ public class KeypadHandler extends BaseKeypadHandler {
 
     public KeypadHandler(Thing thing) {
         super(thing);
+        kp = new KeypadConfigSeetouch();
     }
 
 }

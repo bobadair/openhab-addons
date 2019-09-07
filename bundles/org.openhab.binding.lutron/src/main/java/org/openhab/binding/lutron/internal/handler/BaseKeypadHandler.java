@@ -35,6 +35,7 @@ import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.lutron.internal.KeypadComponent;
+import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfig;
 import org.openhab.binding.lutron.internal.protocol.LutronCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,16 +72,24 @@ public abstract class BaseKeypadHandler extends LutronHandler {
 
     protected abstract void configureComponents(String model);
 
-    protected abstract boolean isLed(int id);
-
-    protected abstract boolean isButton(int id);
-
-    protected abstract boolean isCCI(int id);
-
     private final Object asyncInitLock = new Object();
+
+    protected KeypadConfig kp;
 
     public BaseKeypadHandler(Thing thing) {
         super(thing);
+    }
+
+    protected boolean isLed(int id) {
+        return kp.isLed(id);
+    }
+
+    protected boolean isButton(int id) {
+        return kp.isButton(id);
+    }
+
+    protected boolean isCCI(int id) {
+        return kp.isCCI(id);
     }
 
     protected void configureChannels() {
