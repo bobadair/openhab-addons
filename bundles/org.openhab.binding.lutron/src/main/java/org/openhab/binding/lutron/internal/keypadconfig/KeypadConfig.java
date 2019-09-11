@@ -12,10 +12,12 @@
  */
 package org.openhab.binding.lutron.internal.keypadconfig;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.openhab.binding.lutron.internal.KeypadComponent;
 import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
 
@@ -26,11 +28,7 @@ import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
  */
 public abstract class KeypadConfig {
 
-    protected HashMap<String, List<KeypadComponent>> modelData;
-
-    public KeypadConfig() {
-        super();
-    }
+    protected final @NonNull HashMap<String, List<KeypadComponent>> modelData = new HashMap<>();
 
     public abstract boolean isCCI(int id);
 
@@ -66,4 +64,23 @@ public abstract class KeypadConfig {
         return idList;
     }
 
+    public String determineModelFromComponentIds(List<Integer> buttonIds) {
+        for (String k : modelData.keySet()) {
+            List<Integer> modelButtonIds = getComponentIds(k, ComponentType.BUTTON);
+            Collections.sort(modelButtonIds); // make sure button IDs are in ascending order for comparison
+            if (modelButtonIds.equals(buttonIds)) {
+                return k;
+            }
+        }
+        return null;
+    }
+
+    @SafeVarargs
+    protected static final List<KeypadComponent> combinedList(final List<KeypadComponent>... lists) {
+        List<KeypadComponent> newlist = new LinkedList<>();
+        for (List<KeypadComponent> list : lists) {
+            newlist.addAll(list);
+        }
+        return newlist;
+    }
 }

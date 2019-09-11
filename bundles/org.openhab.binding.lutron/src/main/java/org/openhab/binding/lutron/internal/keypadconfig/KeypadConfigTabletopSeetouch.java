@@ -171,12 +171,4 @@ public class KeypadConfigTabletopSeetouch extends KeypadConfig {
                 LEDGROUP1, LEDGROUP2, LEDGROUP3, LEDGROUPBOTTOM_RL)); // Strict superset of all models
     }
 
-    @SafeVarargs
-    private static final List<KeypadComponent> combinedList(final List<KeypadComponent>... lists) {
-        List<KeypadComponent> newlist = new LinkedList<>();
-        for (List<KeypadComponent> list : lists) {
-            newlist.addAll(list);
-        }
-        return newlist;
-    }
 }

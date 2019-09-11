@@ -88,12 +88,6 @@ public class KeypadConfigPico extends KeypadConfig {
     }
 
     public KeypadConfigPico() {
-        // 2B : Component.BUTTON1, Component.BUTTON3
-        // 2BRL: Component.BUTTON1, Component.BUTTON3, Component.RAISE, Component.LOWER
-        // 3B : Component.BUTTON1, Component.BUTTON2, Component.BUTTON3
-        // 3BRL: Component.BUTTON1, Component.BUTTON2, Component.BUTTON3, Component.RAISE, Component.LOWER
-        // 4B : Component.BUTTON1_4B, Component.BUTTON2_4B, Component.BUTTON3_4B, Component.BUTTON4_4B
-
         modelData.put("2B", Arrays.asList(Component.BUTTON1, Component.BUTTON3));
         modelData.put("2BRL", Arrays.asList(Component.BUTTON1, Component.BUTTON3, Component.RAISE, Component.LOWER));
         modelData.put("3B", Arrays.asList(Component.BUTTON1, Component.BUTTON2, Component.BUTTON3));
