@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.lutron.internal.handler;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
 import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfigPico;
@@ -23,6 +25,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Adair - Initial contribution
  */
+@NonNullByDefault
 public class PicoKeypadHandler extends BaseKeypadHandler {
 
     private final Logger logger = LoggerFactory.getLogger(PicoKeypadHandler.class);
@@ -33,7 +36,7 @@ public class PicoKeypadHandler extends BaseKeypadHandler {
     }
 
     @Override
-    protected void configureComponents(String model) {
+    protected void configureComponents(@Nullable String model) {
         String mod = model == null ? "Generic" : model;
         logger.debug("Configuring components for keypad model {}", mod);
 

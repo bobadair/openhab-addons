@@ -15,6 +15,7 @@ package org.openhab.binding.lutron.internal.keypadconfig;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.binding.lutron.internal.KeypadComponent;
 import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
 //import org.openhab.binding.lutron.internal.handler.Component;
@@ -24,6 +25,7 @@ import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
  *
  * @author Bob Adair - Initial contribution
  */
+@NonNullByDefault
 public class KeypadConfigGrafikEye extends KeypadConfig {
 
     private static enum Component implements KeypadComponent {

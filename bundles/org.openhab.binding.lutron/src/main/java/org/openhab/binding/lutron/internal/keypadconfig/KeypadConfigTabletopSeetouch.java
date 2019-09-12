@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.binding.lutron.internal.KeypadComponent;
 import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
 
@@ -24,6 +25,7 @@ import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
  *
  * @author Bob Adair - Initial contribution
  */
+@NonNullByDefault
 public class KeypadConfigTabletopSeetouch extends KeypadConfig {
 
     private static enum Component implements KeypadComponent {

@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.lutron.internal.handler;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.openhab.binding.lutron.internal.KeypadComponent;
 import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
@@ -23,6 +25,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Adair - Initial contribution
  */
+@NonNullByDefault
 public class VirtualKeypadHandler extends BaseKeypadHandler {
 
     private class Component implements KeypadComponent {
@@ -77,7 +80,7 @@ public class VirtualKeypadHandler extends BaseKeypadHandler {
     }
 
     @Override
-    protected void configureComponents(String model) {
+    protected void configureComponents(@Nullable String model) {
         logger.debug("Configuring components for virtual keypad");
 
         for (int x = 1; x <= 100; x++) {

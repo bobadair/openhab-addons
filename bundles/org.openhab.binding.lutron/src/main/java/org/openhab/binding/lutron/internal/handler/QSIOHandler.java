@@ -14,6 +14,8 @@ package org.openhab.binding.lutron.internal.handler;
 
 import java.util.Arrays;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.openhab.binding.lutron.internal.KeypadComponent;
 import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
@@ -25,6 +27,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Adair - Initial contribution
  */
+@NonNullByDefault
 public class QSIOHandler extends BaseKeypadHandler {
 
     private static enum Component implements KeypadComponent {
@@ -85,7 +88,7 @@ public class QSIOHandler extends BaseKeypadHandler {
     }
 
     @Override
-    protected void configureComponents(String model) {
+    protected void configureComponents(@Nullable String model) {
         logger.debug("Configuring components for VCRX");
 
         cciList.addAll(Arrays.asList(Component.CCI1, Component.CCI2, Component.CCI3, Component.CCI4, Component.CCI5));

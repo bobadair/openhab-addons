@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.lutron.internal.handler;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
 import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfigIntlSeetouch;
@@ -24,12 +26,13 @@ import org.slf4j.LoggerFactory;
  *
  * @author Bob Adair - Initial contribution
  */
+@NonNullByDefault
 public class IntlKeypadHandler extends BaseKeypadHandler {
 
     private final Logger logger = LoggerFactory.getLogger(IntlKeypadHandler.class);
 
     @Override
-    protected void configureComponents(String model) {
+    protected void configureComponents(@Nullable String model) {
         String mod = model == null ? "Generic" : model;
         logger.debug("Configuring components for keypad model {}", model);
 
