@@ -29,7 +29,6 @@ import org.openhab.binding.lutron.internal.discovery.project.ComponentType;
  */
 @NonNullByDefault
 public abstract class KeypadConfig {
-
     protected final HashMap<String, List<KeypadComponent>> modelData = new HashMap<>();
 
     public abstract boolean isCCI(int id);

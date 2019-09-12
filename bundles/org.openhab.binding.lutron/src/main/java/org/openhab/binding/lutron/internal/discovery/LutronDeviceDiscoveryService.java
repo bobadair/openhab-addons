@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,6 +60,7 @@ import org.openhab.binding.lutron.internal.discovery.project.Project;
 import org.openhab.binding.lutron.internal.discovery.project.Timeclock;
 import org.openhab.binding.lutron.internal.handler.IPBridgeHandler;
 import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfig;
+import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfigGrafikEye;
 import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfigIntlSeetouch;
 import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfigPico;
 import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfigSeetouch;
@@ -74,7 +76,7 @@ import org.slf4j.LoggerFactory;
  * @author Allan Tong - Initial contribution
  * @author Bob Adair - Added support for more output devices and keypads, VCRX, repeater virtual buttons,
  *         Timeclock, and Green Mode. Added option to read XML from file. Switched to jetty HTTP client for better
- *         exception handling.
+ *         exception handling. Added keypad model discovery.
  */
 public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
 
@@ -273,59 +275,58 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
 
                 case SEETOUCH_KEYPAD:
                 case HYBRID_SEETOUCH_KEYPAD:
-                    buttons = getComponentList(device.getComponents(), ComponentType.BUTTON);
+                    buttons = getComponentIdList(device.getComponents(), ComponentType.BUTTON);
                     kpConfig = new KeypadConfigSeetouch();
                     kpModel = kpConfig.determineModelFromComponentIds(buttons);
                     if (kpModel == null) {
-                        logger.debug("Found seeTouch Keypad {} with buttons: {}", device.getIntegrationId(), buttons);
+                        logger.info("Unable to determine model of seeTouch keypad {} with button IDs: {}",
+                                device.getIntegrationId(), buttons);
                         notifyDiscovery(THING_TYPE_KEYPAD, device.getIntegrationId(), label);
                     } else {
-                        logger.debug("Found seeTouch Keypad {} with buttons: {} model: {}", device.getIntegrationId(),
-                                buttons, kpModel);
+                        logger.debug("Found seeTouch Keypad {} model: {}", device.getIntegrationId(), kpModel);
                         notifyDiscovery(THING_TYPE_KEYPAD, device.getIntegrationId(), label, "model", kpModel);
                     }
                     break;
 
                 case INTERNATIONAL_SEETOUCH_KEYPAD:
-                    buttons = getComponentList(device.getComponents(), ComponentType.BUTTON);
+                    buttons = getComponentIdList(device.getComponents(), ComponentType.BUTTON);
                     kpConfig = new KeypadConfigIntlSeetouch();
                     kpModel = kpConfig.determineModelFromComponentIds(buttons);
                     if (kpModel == null) {
-                        logger.debug("Found International seeTouch Keypad {} with buttons: {}",
+                        logger.info("Unable to determine model of International seeTouch keypad {} with button IDs: {}",
                                 device.getIntegrationId(), buttons);
                         notifyDiscovery(THING_TYPE_INTLKEYPAD, device.getIntegrationId(), label);
                     } else {
-                        logger.debug("Found International seeTouch Keypad {} with buttons: {} model: {}",
-                                device.getIntegrationId(), buttons, kpModel);
+                        logger.debug("Found International seeTouch Keypad {} model: {}", device.getIntegrationId(),
+                                kpModel);
                         notifyDiscovery(THING_TYPE_INTLKEYPAD, device.getIntegrationId(), label, "model", kpModel);
                     }
                     break;
 
                 case SEETOUCH_TABLETOP_KEYPAD:
-                    buttons = getComponentList(device.getComponents(), ComponentType.BUTTON);
+                    buttons = getComponentIdList(device.getComponents(), ComponentType.BUTTON);
                     kpConfig = new KeypadConfigTabletopSeetouch();
                     kpModel = kpConfig.determineModelFromComponentIds(buttons);
                     if (kpModel == null) {
-                        logger.debug("Found Tabletop seeTouch Keypad {} with buttons: {}", device.getIntegrationId(),
-                                buttons);
+                        logger.info("Unable to determine model of Tabletop seeTouch keypad {} with button IDs: {}",
+                                device.getIntegrationId(), buttons);
                         notifyDiscovery(THING_TYPE_TTKEYPAD, device.getIntegrationId(), label);
                     } else {
-                        logger.debug("Found Tabletop seeTouch Keypad {} with buttons: {} model: {}",
-                                device.getIntegrationId(), buttons, kpModel);
+                        logger.debug("Found Tabletop seeTouch Keypad {} model: {}", device.getIntegrationId(), kpModel);
                         notifyDiscovery(THING_TYPE_TTKEYPAD, device.getIntegrationId(), label, "model", kpModel);
                     }
                     break;
 
                 case PICO_KEYPAD:
-                    buttons = getComponentList(device.getComponents(), ComponentType.BUTTON);
+                    buttons = getComponentIdList(device.getComponents(), ComponentType.BUTTON);
                     kpConfig = new KeypadConfigPico();
                     kpModel = kpConfig.determineModelFromComponentIds(buttons);
                     if (kpModel == null) {
-                        logger.debug("Found Pico Keypad {} with buttons: {}", device.getIntegrationId(), buttons);
+                        logger.info("Unable to determine model of Pico keypad {} with button IDs: {}",
+                                device.getIntegrationId(), buttons);
                         notifyDiscovery(THING_TYPE_PICO, device.getIntegrationId(), label);
                     } else {
-                        logger.debug("Found Pico Keypad {} with buttons: {} model: {}", device.getIntegrationId(),
-                                buttons, kpModel);
+                        logger.debug("Found Pico Keypad {} model: {}", device.getIntegrationId(), kpModel);
                         notifyDiscovery(THING_TYPE_PICO, device.getIntegrationId(), label, "model", kpModel);
                     }
                     break;
@@ -343,7 +344,24 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
                     break;
 
                 case GRAFIK_EYE_QS:
-                    notifyDiscovery(THING_TYPE_GRAFIKEYEKEYPAD, device.getIntegrationId(), label);
+                    buttons = getComponentIdList(device.getComponents(), ComponentType.BUTTON);
+                    // remove button IDs >= 300 which the handler does not recognize
+                    List<Integer> buttonsCopy = new ArrayList<>(buttons);
+                    for (Integer c : buttonsCopy) {
+                        if (c >= 300) {
+                            buttons.remove(Integer.valueOf(c));
+                        }
+                    }
+                    kpConfig = new KeypadConfigGrafikEye();
+                    kpModel = kpConfig.determineModelFromComponentIds(buttons);
+                    if (kpModel == null) {
+                        logger.info("Unable to determine model of GrafikEye Keypad {} with button IDs: {}",
+                                device.getIntegrationId(), buttons);
+                        notifyDiscovery(THING_TYPE_GRAFIKEYEKEYPAD, device.getIntegrationId(), label);
+                    } else {
+                        logger.debug("Found GrafikEye keypad {} model: {}", device.getIntegrationId(), kpModel);
+                        notifyDiscovery(THING_TYPE_GRAFIKEYEKEYPAD, device.getIntegrationId(), label, "model", kpModel);
+                    }
                     break;
             }
         } else {
@@ -351,7 +369,7 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
         }
     }
 
-    private List<Integer> getComponentList(List<Component> clist, ComponentType ctype) {
+    private List<Integer> getComponentIdList(List<Component> clist, ComponentType ctype) {
         List<Integer> returnList = new LinkedList<>();
         for (Component c : clist) {
             if (c.getComponentType() == ctype) {
