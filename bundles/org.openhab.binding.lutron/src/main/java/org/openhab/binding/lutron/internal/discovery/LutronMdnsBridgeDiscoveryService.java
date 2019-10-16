@@ -20,9 +20,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.jmdns.ServiceInfo;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
@@ -34,25 +37,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link LutronMdnsBridgeDiscoveryService} discovers Lutron Caseta Smart Bridge devices on the network using mDNS.
- * Note: We don't get the SN from mDNS so use the MAC address instead.
+ * The {@link LutronMdnsBridgeDiscoveryService} discovers Lutron Caseta Smart Bridge and RA2 Select Main Repeater
+ * devices on the network using mDNS.
  *
  * @author Bob Adair - Initial contribution
  */
 @Component(immediate = true)
+@NonNullByDefault
 public class LutronMdnsBridgeDiscoveryService implements MDNSDiscoveryParticipant {
 
-    private static final String PROPERTY_PRODFAM = "productFamily";
-    private static final String PROPERTY_PRODTYP = "productType";
-    private static final String PROPERTY_CODEVER = "codeVersion";
-    private static final String PROPERTY_MACADDR = "macAddress";
+    // Lutron mDNS service <app>.<protocol>.<servicedomain>
+    private static final String LUTRON_MDNS_SERVICE_TYPE = "_lutron._tcp.local.";
 
+    private static final String PRODFAM_CASETA = "Caseta";
+    private static final String PRODTYP_CASETA_SBP2 = "Smart Bridge Pro 2";
     private static final String DEVCLASS_CASETA_SBP2 = "08050100";
+    private static final String DEFAULT_LABEL = "Unknown Lutron bridge";
 
-    private static final String LUTRON_MDNS_SERVICE_TYPE = "_lutron._tcp.local."; // Lutron mDNS
-                                                                                  // app.protocol.servicedomain
-    // private static final String LUTRON_MDNS_SERVICE_TYPE = "_amzn-wplay._tcp.local."; // TODO
-    private static final String DEFAULT_LABEL = "Caseta Hub";
+    private static final Pattern HOSTNAME_REGEX = Pattern.compile("lutron-([0-9a-f]+)\\."); // ex: lutron-01f1529a.local
 
     private final Logger logger = LoggerFactory.getLogger(LutronMdnsBridgeDiscoveryService.class);
 
@@ -74,63 +76,46 @@ public class LutronMdnsBridgeDiscoveryService implements MDNSDiscoveryParticipan
 
         String nice = service.getNiceTextString();
         String qualifiedName = service.getQualifiedName();
-        String name = service.getName();
-        String typeSubtype = service.getTypeWithSubtype();
-        String type = service.getType();
-        String subtype = service.getSubtype();
-        String server = service.getServer();
-        String application = service.getApplication();
-        String domain = service.getDomain();
-        String protocol = service.getProtocol();
-        Integer port = service.getPort();
-        InetAddress[] ipAddresses = service.getInetAddresses();
 
+        InetAddress[] ipAddresses = service.getInetAddresses();
         String devclass = service.getPropertyString("DEVCLASS");
         String codever = service.getPropertyString("CODEVER");
         String macaddr = service.getPropertyString("MACADDR");
 
-        // TODO REMOVE AFTER DEVELOPMENT vvv
-        logger.debug("Caseta bridge discovery found device: {}", nice);
-        logger.debug("Caseta bridge qualifiedName: {}", qualifiedName);
-        logger.debug("Caseta bridge name: {}", name);
-        logger.debug("Caseta bridge type: {}", type);
-        logger.debug("Caseta bridge subtype: {}", subtype);
-        logger.debug("Caseta bridge type with subtype: {}", typeSubtype);
-        logger.debug("Caseta bridge application: {}", application);
-        logger.debug("Caseta bridge protocol: {}", protocol);
-        logger.debug("Caseta bridge domain: {}", domain);
-        logger.debug("Caseta bridge server: {}", server);
-        logger.debug("Caseta bridge ipAddresses: {}", (Object[]) ipAddresses);
-        logger.debug("Caseta bridge port: {}", port);
-
-        logger.debug("Caseta bridge property DEVCLASS: {}", devclass);
-        logger.debug("Caseta bridge property CODEVER: {}", codever);
-        logger.debug("Caseta bridge property MACADDR: {}", macaddr);
-
-        // TODO REMOVE AFTER DEVELOPMENT ^^^
+        logger.debug("Lutron mDNS bridge discovery found Lutron mDNS service: {}", nice);
+        logger.trace("Lutron mDNS service qualifiedName: {}", qualifiedName);
+        logger.trace("Lutron mDNS service ipAddresses: {}", (Object[]) ipAddresses);
+        logger.trace("Lutron mDNS service property DEVCLASS: {}", devclass);
+        logger.trace("Lutron mDNS service property CODEVER: {}", codever);
+        logger.trace("Lutron mDNS service property MACADDR: {}", macaddr);
 
         Map<String, Object> properties = new HashMap<>();
-        // properties.put(BRIDGE_TYPE, BRIDGE_TYPE_CASETA); // TODO - fix properties
+        String label = DEFAULT_LABEL;
 
         if (ipAddresses.length < 1) {
             return null;
         }
         if (ipAddresses.length > 1) {
-            logger.info("Multiple addresses found for discovered hub device. Using only the first.");
+            logger.info("Multiple addresses found for discovered bridge device. Using only the first.");
         }
         properties.put(HOST, ipAddresses[0].getHostAddress());
 
-        String strippedMac = getStrippedMac(service);
-        properties.put(SERIAL_NUMBER, strippedMac);
+        String bridgeHostName = ipAddresses[0].getHostName();
+        logger.debug("Lutron mDNS bridge hostname: {}", bridgeHostName);
 
         if (devclass != null && devclass.equals(DEVCLASS_CASETA_SBP2)) {
-            properties.put(PROPERTY_PRODFAM, "Caseta");
-            properties.put(PROPERTY_PRODTYP, "Smart Bridge Pro 2");
+            properties.put(PROPERTY_PRODFAM, PRODFAM_CASETA);
+            properties.put(PROPERTY_PRODTYP, PRODTYP_CASETA_SBP2);
+            label = PRODFAM_CASETA + " " + PRODTYP_CASETA_SBP2;
         } else {
             properties.put(PROPERTY_PRODFAM, "Unknown");
             if (devclass != null) {
-                properties.put(PROPERTY_PRODTYP, "DEVCLASS=" + devclass);
+                properties.put(PROPERTY_PRODTYP, "DEVCLASS " + devclass);
             }
+        }
+
+        if (!bridgeHostName.equals(ipAddresses[0].getHostAddress())) {
+            label = label + " " + bridgeHostName;
         }
 
         if (codever != null) {
@@ -141,40 +126,76 @@ public class LutronMdnsBridgeDiscoveryService implements MDNSDiscoveryParticipan
             properties.put(PROPERTY_MACADDR, macaddr);
         }
 
-        String label = DEFAULT_LABEL; // TODO - change to prodfam + prodtyp?
-        String bridgeHostName = ipAddresses[0].getHostName();
-        logger.debug("Caseta bridge hostname: {}", bridgeHostName);
-        if (!bridgeHostName.equals(ipAddresses[0].getHostAddress())) {
-            label = label + " " + bridgeHostName;
+        String sn = getSerial(service);
+        logger.trace("Lutron mDNS bridge serial number: {}", sn);
+        if (sn != null) {
+            properties.put(SERIAL_NUMBER, sn);
         }
 
         ThingUID uid = getThingUID(service);
-        if (strippedMac != null && uid != null) {
+        if (uid != null) {
             DiscoveryResult result = DiscoveryResultBuilder.create(uid).withLabel(label).withProperties(properties)
                     .withRepresentationProperty(SERIAL_NUMBER).build();
+            logger.debug("Discovered Lutron bridge device via mDNS {}", uid);
             return result;
         } else {
+            logger.trace("Failed to successfully discover bridge via mDNS");
             return null;
         }
     }
 
     @Override
     public @Nullable ThingUID getThingUID(ServiceInfo service) {
-        String strippedMac = getStrippedMac(service);
-        if (strippedMac == null) {
+        String serial = getSerial(service);
+        if (serial == null) {
             return null;
         } else {
-            return new ThingUID(THING_TYPE_IPBRIDGE, strippedMac);
+            return new ThingUID(THING_TYPE_IPBRIDGE, serial);
         }
     }
 
-    private @Nullable String getStrippedMac(ServiceInfo service) {
-        String mac = service.getPropertyString("MACADDR");
-        // String mac = service.getPropertyString("c"); //TODO
+    /**
+     * Return the serial number from the mDNS service. Extracts serial number from the mDNS service hostname or uses MAC
+     * address if serial number is unavailable. Used as unique thing representation property.
+     *
+     * @param service Lutron mDNS service
+     * @return String containing serial number or MAC, or null if neither can be determined
+     */
+    private @Nullable String getSerial(ServiceInfo service) {
+        InetAddress[] ipAddresses = service.getInetAddresses();
+        if (ipAddresses.length < 1) {
+            return null;
+        }
+        Matcher matcher = HOSTNAME_REGEX.matcher(ipAddresses[0].getHostName());
+        boolean matched = matcher.find();
+        String serialnum = null;
+
+        if (matched) {
+            serialnum = matcher.group(1);
+        }
+        if (matched && serialnum != null && !serialnum.isEmpty()) {
+            return serialnum;
+        } else {
+            String macaddr = service.getPropertyString("MACADDR");
+            String strippedMac = stripMac(macaddr);
+            if (strippedMac != null) {
+                return strippedMac;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Utility routine to strip colon characters from MAC address
+     *
+     * @param mac String containing the MAC address to strip
+     * @return String containing stripped MAC address or null if mac is null or empty
+     */
+    private @Nullable String stripMac(@Nullable String mac) {
         if (mac == null || mac.isEmpty()) {
             return null;
         }
-        String strippedMac = mac.replace(":", ""); // strip colon chars from mac address
-        return strippedMac;
+        return mac.replace(":", ""); // strip colon chars from MAC address
     }
 }
