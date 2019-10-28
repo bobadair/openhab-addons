@@ -36,7 +36,8 @@ This binding currently supports the following thing types:
 * **grafikeyekeypad** - GRAFIK Eye QS Keypad (RadioRA 2/HomeWorks QS only)
 * **virtualkeypad** - Repeater virtual keypad
 * **vcrx** - Visor control receiver module (VCRX)
-* **qsio** - HomeWorks QS IO Interface
+* **qsio** - QS IO Interface (HomeWorks QS only)
+* **wci** - QS Wallbox Closure Interface (WCI) (HomeWorks QS only)
 * **cco** - Contact closure output module or VCRX CCO
 * **shade** - Lutron shade or motorized drape
 * **blind** - Lutron venetian blind or horizontal sheer blind [**Experimental**]
@@ -337,6 +338,24 @@ Thing configuration file example:
 
 ```
 Thing qsio sensorinputs [ integrationId=42 ]
+```
+
+### QS Wallbox Closure Interface (WCI) (HomeWorks QS only)
+
+The Lutron Wallbox Closure Interface (QSE-CI-WCI) is used to interface to contact closure keypads.
+It is handled by the **wci** thing.
+The 8 button inputs appear to the HomeWorks system as normal keypad buttons.
+There are also 8 LEDs, although they are normally hidden and thus mainly useful for setup and diagnostics.
+
+Supported options are `integrationId` and `autorelease`.
+Supplying a model is not required, as there is only one model.
+
+See the Lutron documentation for more information.
+
+Thing configuration file example:
+
+```
+Thing wci specialkeypad [ integrationId=48, autorelease=true ]
 ```
 
 ### CCO Modules
