@@ -12,6 +12,10 @@
  */
 package org.openhab.binding.lutron.internal.handler;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.thing.Bridge;
@@ -87,6 +91,15 @@ public abstract class LutronHandler extends BaseThingHandler {
             thingOfflineNotify();
         } else {
             bridgeHandler.sendCommand(command);
+        }
+    }
+
+    protected String paramFormat(@NonNull final BigDecimal param) {
+        // If param has > 2 decimal places, round it down to two places.
+        if (param.scale() > 2) {
+            return param.setScale(2, RoundingMode.HALF_UP).toPlainString();
+        } else {
+            return param.toPlainString();
         }
     }
 

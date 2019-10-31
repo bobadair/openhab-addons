@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.PercentType;
 import org.eclipse.smarthome.core.thing.Bridge;
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * @author Bob Adair - Added initDeviceState method
  */
 public class DimmerHandler extends LutronHandler {
-    private static final Integer ACTION_ZONELEVEL = 1;
+    private static final String ACTION_ZONELEVEL = "1";
 
     private final Logger logger = LoggerFactory.getLogger(DimmerHandler.class);
 
@@ -106,13 +107,13 @@ public class DimmerHandler extends LutronHandler {
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (channelUID.getId().equals(CHANNEL_LIGHTLEVEL)) {
-            if (command instanceof Number) {
-                int level = ((Number) command).intValue();
-                output(ACTION_ZONELEVEL, level, 0.25);
+            if (command instanceof DecimalType) { // Should really be PercentType, but was originally Number
+                BigDecimal level = ((DecimalType) command).toBigDecimal();
+                output(ACTION_ZONELEVEL, paramFormat(level), "0.25");
             } else if (command.equals(OnOffType.ON)) {
-                output(ACTION_ZONELEVEL, 100, fadeInTime);
+                output(ACTION_ZONELEVEL, "100", fadeInTime);
             } else if (command.equals(OnOffType.OFF)) {
-                output(ACTION_ZONELEVEL, 0, fadeOutTime);
+                output(ACTION_ZONELEVEL, "0", fadeOutTime);
             }
         }
     }
@@ -125,8 +126,8 @@ public class DimmerHandler extends LutronHandler {
     @Override
     public void handleUpdate(LutronCommandType type, String... parameters) {
         if (type == LutronCommandType.OUTPUT && parameters.length > 1
-                && ACTION_ZONELEVEL.toString().equals(parameters[0])) {
-            BigDecimal level = new BigDecimal(parameters[1]);
+                && ACTION_ZONELEVEL.equals(parameters[0].trim())) {
+            BigDecimal level = new BigDecimal(parameters[1].trim());
             if (getThing().getStatus() == ThingStatus.UNKNOWN) {
                 updateStatus(ThingStatus.ONLINE);
             }
