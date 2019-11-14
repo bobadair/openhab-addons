@@ -1117,7 +1117,7 @@
 		<label>Light Level</label>
 		<description>Increase/decrease the light level</description>
 		<category>DimmableLight</category>
-		<state min="0" max="100" pattern="%d %%"/>
+		<state min="0" max="100" step="0.1" pattern="%.1f %%"/>
 	</channel-type>
 
 	<channel-type id="shadeControl">
