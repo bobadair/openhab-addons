@@ -20,9 +20,9 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
-import org.openhab.binding.lutron.internal.protocol.LutronCommand;
-import org.openhab.binding.lutron.internal.protocol.LutronCommandType;
-import org.openhab.binding.lutron.internal.protocol.LutronOperation;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,10 +57,10 @@ public abstract class LutronHandler extends BaseThingHandler {
     protected void thingOfflineNotify() {
     }
 
-    protected @Nullable IPBridgeHandler getBridgeHandler() {
+    protected @Nullable AbstractBridgeHandler getBridgeHandler() {
         Bridge bridge = getBridge();
 
-        return bridge == null ? null : (IPBridgeHandler) bridge.getHandler();
+        return bridge == null ? null : (AbstractBridgeHandler) bridge.getHandler();
     }
 
     @Override
@@ -79,7 +79,7 @@ public abstract class LutronHandler extends BaseThingHandler {
     }
 
     private void sendCommand(LutronCommand command) {
-        IPBridgeHandler bridgeHandler = getBridgeHandler();
+        AbstractBridgeHandler bridgeHandler = getBridgeHandler();
 
         if (bridgeHandler == null) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.HANDLER_MISSING_ERROR, "No bridge associated");

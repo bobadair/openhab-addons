@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.lutron.internal.protocol;
+package org.openhab.binding.lutron.internal.protocol.lip;
 
 /**
  * Command to a Lutron integration access point.
@@ -22,7 +22,7 @@ public class LutronCommand {
     private final LutronOperation operation;
     private final LutronCommandType type;
     private final int integrationId;
-    private final Object[] parameters;
+    public final Object[] parameters;
 
     public LutronCommand(LutronOperation operation, LutronCommandType type, int integrationId, Object... parameters) {
         this.operation = operation;
@@ -35,12 +35,25 @@ public class LutronCommand {
         return this.type;
     }
 
+    public LutronOperation getOperation() {
+        return this.operation;
+    }
+
     public int getIntegrationId() {
         return this.integrationId;
     }
 
     public Object[] getParameters() {
         return this.parameters;
+    }
+
+    public int getNumberParameter(int position) {
+        if (parameters.length > position && parameters[position] instanceof Number) {
+            Number num = (Number) parameters[position];
+            return num.intValue();
+        } else {
+            throw (new IllegalArgumentException("Command parameter not a Number"));
+        }
     }
 
     @Override

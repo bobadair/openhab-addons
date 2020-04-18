@@ -28,6 +28,7 @@ public class LutronBindingConstants {
 
     // Bridge Type UIDs
     public static final ThingTypeUID THING_TYPE_IPBRIDGE = new ThingTypeUID(BINDING_ID, "ipbridge");
+    public static final ThingTypeUID THING_TYPE_LEAPBRIDGE = new ThingTypeUID(BINDING_ID, "leapbridge");
 
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_DIMMER = new ThingTypeUID(BINDING_ID, "dimmer");
