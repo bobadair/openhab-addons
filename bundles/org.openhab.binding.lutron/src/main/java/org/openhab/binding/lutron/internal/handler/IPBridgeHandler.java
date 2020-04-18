@@ -30,15 +30,14 @@ import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
-import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.lutron.internal.config.IPBridgeConfig;
 import org.openhab.binding.lutron.internal.discovery.LutronDeviceDiscoveryService;
 import org.openhab.binding.lutron.internal.net.TelnetSession;
 import org.openhab.binding.lutron.internal.net.TelnetSessionListener;
-import org.openhab.binding.lutron.internal.protocol.LutronCommand;
-import org.openhab.binding.lutron.internal.protocol.LutronCommandType;
-import org.openhab.binding.lutron.internal.protocol.LutronOperation;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * @author Bob Adair - Added reconnect and heartbeat config parameters, moved discovery service registration to
  *         LutronHandlerFactory
  */
-public class IPBridgeHandler extends BaseBridgeHandler {
+public class IPBridgeHandler extends AbstractBridgeHandler {
     private static final Pattern RESPONSE_REGEX = Pattern
             .compile("~(OUTPUT|DEVICE|SYSTEM|TIMECLOCK|MODE),([0-9\\.:/]+),([0-9,\\.:/]*)\\Z");
 
@@ -307,7 +306,8 @@ public class IPBridgeHandler extends BaseBridgeHandler {
         return false;
     }
 
-    void sendCommand(LutronCommand command) {
+    @Override
+    public void sendCommand(LutronCommand command) {
         this.sendQueue.add(command);
     }
 

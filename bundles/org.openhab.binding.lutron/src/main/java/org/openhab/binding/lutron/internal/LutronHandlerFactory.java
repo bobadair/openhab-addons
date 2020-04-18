@@ -34,6 +34,7 @@ import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
 import org.eclipse.smarthome.io.net.http.HttpClientFactory;
 import org.eclipse.smarthome.io.transport.serial.SerialPortManager;
+import org.openhab.binding.lutron.internal.discovery.LeapDeviceDiscoveryService;
 import org.openhab.binding.lutron.internal.discovery.LutronDeviceDiscoveryService;
 import org.openhab.binding.lutron.internal.grxprg.GrafikEyeHandler;
 import org.openhab.binding.lutron.internal.grxprg.PrgBridgeHandler;
@@ -46,6 +47,7 @@ import org.openhab.binding.lutron.internal.handler.GreenModeHandler;
 import org.openhab.binding.lutron.internal.handler.IPBridgeHandler;
 import org.openhab.binding.lutron.internal.handler.IntlKeypadHandler;
 import org.openhab.binding.lutron.internal.handler.KeypadHandler;
+import org.openhab.binding.lutron.internal.handler.LeapBridgeHandler;
 import org.openhab.binding.lutron.internal.handler.MaintainedCcoHandler;
 import org.openhab.binding.lutron.internal.handler.OccupancySensorHandler;
 import org.openhab.binding.lutron.internal.handler.PalladiomKeypadHandler;
@@ -97,18 +99,19 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
             .unmodifiableSet(Collections.singleton(HwConstants.THING_TYPE_HWDIMMER));
 
     // Other types that can be initiated but not discovered
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.unmodifiableSet(
-            Stream.of(THING_TYPE_IPBRIDGE, PrgConstants.THING_TYPE_PRGBRIDGE, PrgConstants.THING_TYPE_GRAFIKEYE,
-                    RadioRAConstants.THING_TYPE_RS232, RadioRAConstants.THING_TYPE_DIMMER,
-                    RadioRAConstants.THING_TYPE_SWITCH, RadioRAConstants.THING_TYPE_PHANTOM,
-                    HwConstants.THING_TYPE_HWSERIALBRIDGE, THING_TYPE_CCO).collect(Collectors.toSet()));
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.unmodifiableSet(Stream
+            .of(THING_TYPE_IPBRIDGE, THING_TYPE_LEAPBRIDGE, PrgConstants.THING_TYPE_PRGBRIDGE,
+                    PrgConstants.THING_TYPE_GRAFIKEYE, RadioRAConstants.THING_TYPE_RS232,
+                    RadioRAConstants.THING_TYPE_DIMMER, RadioRAConstants.THING_TYPE_SWITCH,
+                    RadioRAConstants.THING_TYPE_PHANTOM, HwConstants.THING_TYPE_HWSERIALBRIDGE, THING_TYPE_CCO)
+            .collect(Collectors.toSet()));
 
     private final Logger logger = LoggerFactory.getLogger(LutronHandlerFactory.class);
 
     private final SerialPortManager serialPortManager;
 
     private @NonNullByDefault({}) HttpClient httpClient;
-    // shared instance obtained from HttpClientFactory service and passed to device discovery service
+    // shared instance obtained from HttpClientFactory service and passed to device discovery service and LEAP bridge
 
     @Activate
     public LutronHandlerFactory(final @Reference SerialPortManager serialPortManager) {
@@ -144,6 +147,10 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
         if (thingTypeUID.equals(THING_TYPE_IPBRIDGE)) {
             IPBridgeHandler bridgeHandler = new IPBridgeHandler((Bridge) thing);
             registerDiscoveryService(bridgeHandler);
+            return bridgeHandler;
+        } else if (thingTypeUID.equals(THING_TYPE_LEAPBRIDGE)) {
+            LeapBridgeHandler bridgeHandler = new LeapBridgeHandler((Bridge) thing);
+            registerLeapDiscoveryService(bridgeHandler);
             return bridgeHandler;
         } else if (thingTypeUID.equals(THING_TYPE_DIMMER)) {
             return new DimmerHandler(thing);
@@ -220,11 +227,24 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
     /**
      * Register a discovery service for an IP bridge handler.
      *
-     * @param bridgeHandler bridge handler for which to register the discovery service
+     * @param bridgeHandler IP bridge handler for which to register the discovery service
      */
     private synchronized void registerDiscoveryService(IPBridgeHandler bridgeHandler) {
-        logger.debug("Registering discovery service.");
+        logger.debug("Registering XML discovery service.");
         LutronDeviceDiscoveryService discoveryService = new LutronDeviceDiscoveryService(bridgeHandler, httpClient);
+        bridgeHandler.setDiscoveryService(discoveryService);
+        discoveryServiceRegMap.put(bridgeHandler.getThing().getUID(),
+                bundleContext.registerService(DiscoveryService.class.getName(), discoveryService, null));
+    }
+
+    /**
+     * Register a discovery service for a LEAP bridge handler.
+     *
+     * @param bridgeHandler LEAP bridge handler for which to register the discovery service
+     */
+    private synchronized void registerLeapDiscoveryService(LeapBridgeHandler bridgeHandler) {
+        logger.debug("Registering LEAP discovery service.");
+        LeapDeviceDiscoveryService discoveryService = new LeapDeviceDiscoveryService(bridgeHandler);
         bridgeHandler.setDiscoveryService(discoveryService);
         discoveryServiceRegMap.put(bridgeHandler.getThing().getUID(),
                 bundleContext.registerService(DiscoveryService.class.getName(), discoveryService, null));
