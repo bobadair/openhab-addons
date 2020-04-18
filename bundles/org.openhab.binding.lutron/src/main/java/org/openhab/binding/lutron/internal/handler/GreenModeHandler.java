@@ -28,7 +28,8 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
-import org.openhab.binding.lutron.internal.protocol.LutronCommandType;
+import org.openhab.binding.lutron.internal.protocol.ModeCommand;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 @NonNullByDefault
 public class GreenModeHandler extends LutronHandler {
-    private static final Integer ACTION_STEP = 1;
-    public static final int GREENSTEP_MIN = 1;
+    private static final int GREENSTEP_MIN = 1;
 
     // poll interval parameters are in minutes
     private static final int POLL_INTERVAL_DEFAULT = 15;
@@ -94,7 +94,8 @@ public class GreenModeHandler extends LutronHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.UNKNOWN, ThingStatusDetail.NONE, "Awaiting initial response");
-            queryGreenMode(ACTION_STEP); // handleUpdate() will set thing status to online when response arrives
+            queryGreenMode(ModeCommand.ACTION_STEP);
+            // handleUpdate() will set thing status to online when response arrives
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
@@ -122,13 +123,13 @@ public class GreenModeHandler extends LutronHandler {
 
     private synchronized void pollState() {
         logger.trace("Executing green mode polling job for integration ID {}", integrationId);
-        queryGreenMode(ACTION_STEP);
+        queryGreenMode(ModeCommand.ACTION_STEP);
     }
 
     @Override
     public void channelLinked(ChannelUID channelUID) {
         if (channelUID.getId().equals(CHANNEL_STEP)) {
-            queryGreenMode(ACTION_STEP);
+            queryGreenMode(ModeCommand.ACTION_STEP);
         }
     }
 
@@ -136,16 +137,16 @@ public class GreenModeHandler extends LutronHandler {
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (channelUID.getId().equals(CHANNEL_STEP)) {
             if (command == OnOffType.ON) {
-                greenMode(ACTION_STEP, 2);
+                greenMode(ModeCommand.ACTION_STEP, 2);
             } else if (command == OnOffType.OFF) {
-                greenMode(ACTION_STEP, 1);
+                greenMode(ModeCommand.ACTION_STEP, 1);
             } else if (command instanceof Number) {
                 Integer step = new Integer(((Number) command).intValue());
                 if (step.intValue() >= GREENSTEP_MIN) {
-                    greenMode(ACTION_STEP, step);
+                    greenMode(ModeCommand.ACTION_STEP, step);
                 }
             } else if (command instanceof RefreshType) {
-                queryGreenMode(ACTION_STEP);
+                queryGreenMode(ModeCommand.ACTION_STEP);
             } else {
                 logger.debug("Ignoring invalid command {} for id {}", command, integrationId);
             }
@@ -158,7 +159,7 @@ public class GreenModeHandler extends LutronHandler {
     public void handleUpdate(LutronCommandType type, String... parameters) {
         try {
             if (type == LutronCommandType.MODE && parameters.length > 1
-                    && ACTION_STEP.toString().equals(parameters[0])) {
+                    && ModeCommand.ACTION_STEP.toString().equals(parameters[0])) {
                 Long step = new Long(parameters[1]);
                 if (getThing().getStatus() == ThingStatus.UNKNOWN) {
                     updateStatus(ThingStatus.ONLINE);
