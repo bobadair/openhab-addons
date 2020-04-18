@@ -10,21 +10,21 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.lutron.internal.protocol;
+package org.openhab.binding.lutron.internal.protocol.leap;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
- * Type of command in the Lutron integration protocol.
- *
- * @author Allan Tong - Initial contribution
- *
+ * @author Bob Adair - Initial contribution
  */
-public enum LutronCommandType {
-    AREA,
-    DEVICE,
-    GROUP,
-    MODE,
-    MONITORING,
-    OUTPUT,
-    SYSTEM,
-    TIMECLOCK,
+public class Href {
+    @SerializedName("href")
+    public String href = "";
+
+    public Href() {
+    }
+
+    public Href(String href) {
+        this.href = href;
+    }
 }
