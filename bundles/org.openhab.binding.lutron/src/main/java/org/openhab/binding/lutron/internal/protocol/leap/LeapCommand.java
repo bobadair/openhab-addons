@@ -10,26 +10,25 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.lutron.internal.protocol;
+package org.openhab.binding.lutron.internal.protocol.leap;
+
+import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * Requested operation of a command to the Lutron integration protocol.
+ * LeapCommand represents a LEAP protocol command
  *
- * @author Allan Tong - Initial contribution
- *
+ * @author Bob Adair - Initial contribution
  */
-public enum LutronOperation {
-    EXECUTE("#"),
-    QUERY("?");
+@NonNullByDefault
+public class LeapCommand {
+    private String command;
 
-    private final String operationChar;
-
-    LutronOperation(String operationChar) {
-        this.operationChar = operationChar;
+    public LeapCommand(String command) {
+        this.command = command;
     }
 
     @Override
     public String toString() {
-        return this.operationChar;
+        return command;
     }
 }

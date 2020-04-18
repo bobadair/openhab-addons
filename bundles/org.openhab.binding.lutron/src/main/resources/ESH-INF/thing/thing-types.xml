@@ -55,9 +55,81 @@
 		</config-description>
 	</bridge-type>
 
+	<bridge-type id="leapbridge">
+		<label>Lutron LEAP Access Point</label>
+		<description>LEAP access point to Lutron lighting control system</description>
+		<properties>
+			<property name="vendor">Lutron</property>
+		</properties>
+
+		<config-description>
+			<parameter name="ipAddress" type="text" required="true">
+				<context>network-address</context>
+				<label>IP or Host Name</label>
+				<description>The IP or host name of the Lutron integration access point</description>
+			</parameter>
+			<parameter name="port" type="integer">
+				<label>TCP Port</label>
+				<description>The bridge TCP port</description>
+				<default>8081</default>
+			</parameter>
+			<parameter name="keystore" type="text" required="true">
+				<label>Keystore File</label>
+				<description>Java keystore containing caseta key and certs</description>
+			</parameter>
+			<parameter name="keystorePassword" type="text">
+				<label>Keystore Password</label>
+				<description>Password for the keystore file</description>
+			</parameter>
+			<parameter name="clientKey" type="text">
+				<label>Client Key File</label>
+				<description>Client key file (caseta.key) path</description>
+			</parameter>
+			<parameter name="clientCert" type="text">
+				<label>Client Cert File</label>
+				<description>Client certificate file (caseta.crt) path</description>
+			</parameter>
+			<parameter name="bridgeCert" type="text">
+				<label>Bridge Cert File</label>
+				<description>Bridge certificate file (caseta-bridge.crt) path</description>
+			</parameter>
+			<parameter name="keyPassword" type="text">
+				<label>Key Password</label>
+				<description>Key Password</description>
+			</parameter>
+			<parameter name="reconnect" type="integer" min="1" max="60" unit="min">
+				<label>Reconnect Interval</label>
+				<description>The period in minutes that the handler will wait between connection attempts</description>
+				<unitLabel>minutes</unitLabel>
+				<default>5</default>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="heartbeat" type="integer" min="1" max="60" unit="min">
+				<label>Keepalive Heartbeat Interval</label>
+				<description>The period in minutes between connection heartbeat checks</description>
+				<unitLabel>minutes</unitLabel>
+				<default>5</default>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="delay" type="integer" min="0" max="250" unit="ms">
+				<label>Send Delay</label>
+				<description>The delay in milliseconds between sending integration commands (for throttling)</description>
+				<unitLabel>ms</unitLabel>
+				<default>0</default>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="discoveryFile" type="text">
+				<label>Discovery Data File</label>
+				<description>File to read device discovery information from (for debugging)</description>
+				<advanced>true</advanced>
+			</parameter>
+		</config-description>
+	</bridge-type>
+
 	<thing-type id="dimmer">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="ipbridge"/>
+			<bridge-type-ref id="leapbridge"/>
 		</supported-bridge-type-refs>
 
 		<label>Maestro Dimmer</label>
@@ -86,6 +158,7 @@
 	<thing-type id="shade">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="ipbridge"/>
+			<bridge-type-ref id="leapbridge"/>
 		</supported-bridge-type-refs>
 
 		<label>Sivoia QS Shade</label>
@@ -137,6 +210,7 @@
 	<thing-type id="switch">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="ipbridge"/>
+			<bridge-type-ref id="leapbridge"/>
 		</supported-bridge-type-refs>
 
 		<label>Maestro Switch</label>
@@ -423,6 +497,7 @@
 	<thing-type id="pico">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="ipbridge"/>
+			<bridge-type-ref id="leapbridge"/>
 		</supported-bridge-type-refs>
 
 		<label>Pico Keypad</label>
@@ -532,6 +607,7 @@
 	<thing-type id="virtualkeypad">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="ipbridge"/>
+			<bridge-type-ref id="leapbridge"/>
 		</supported-bridge-type-refs>
 
 		<label>Virtual Keypad</label>
