@@ -34,7 +34,7 @@ This binding currently supports the following thing types:
 * **palladiomkeypad** - Palladiom Keypad (HomeWorks QS only)
 * **pico** - Pico Keypad
 * **grafikeyekeypad** - GRAFIK Eye QS Keypad (RadioRA 2/HomeWorks QS only)
-* **virtualkeypad** - Repeater virtual keypad
+* **virtualkeypad** - Repeater/Processor virtual keypad or Caseta scene buttons
 * **vcrx** - Visor control receiver module (VCRX)
 * **qsio** - QS IO Interface (HomeWorks QS only)
 * **wci** - QS Wallbox Closure Interface (WCI) (HomeWorks QS only)
@@ -293,12 +293,18 @@ Thing lutron:grafikeyekeypad:theaterkeypad (lutron:ipbridge:radiora2) [ integrat
 
 ### Virtual Keypads
 
-The **virtualkeypad** thing is used to interface to the virtual buttons on the RadioRA 2 main repeater.
+The **virtualkeypad** thing is used to interface to the virtual buttons on the RadioRA 2 main repeater or HomeWorks processor.
 These are sometimes referred to in the Lutron documentation as phantom buttons or integration buttons, and are used only for integration.
 There are 100 of these virtual buttons, and 100 corresponding virtual indicator LEDs.
 
+The **virtualkeypad** thing can also be used to interface to the scene buttons on Caseta systems.
+For this to work, the optional `model` parameter must be set to `"Caseta"`.
+When used with Caseta, no virtual indicator LED channels are created.
+
 The behavior of this binding is the same as the other keypad bindings, with the exception that the button and LED channels created have the Advanced flag set.
 This means, among other things, that they will not be automatically linked to items in the Paper UI's Simple Mode.
+
+Supported settings for `model` parameter: Caseta, Other (default)
 
 Thing configuration file example:
 
