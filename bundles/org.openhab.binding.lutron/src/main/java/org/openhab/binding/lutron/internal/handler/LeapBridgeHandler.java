@@ -156,8 +156,8 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 // Create keystore
                 // KeyStore keystore = KeyStore.getInstance("JKS");
                 KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-                keystore.load(new FileInputStream("C:\\Users\\Bob\\Documents\\leap\\lutron.keystore"),
-                        "secret".toCharArray());
+                // keystore.load(new FileInputStream("C:\\Users\\Bob\\Documents\\leap\\lutron.keystore"),
+                // "secret".toCharArray());
                 keystore.load(new FileInputStream(config.keystore), config.keystorePassword.toCharArray());
                 // keystore.load(null, null);
                 // keystore.setCertificateEntry(alias, cert);
@@ -190,7 +190,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
                 sslsocketfactory = sslContext.getSocketFactory();
             } catch (FileNotFoundException e) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Certificate file not found");
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "File not found");
                 return;
             } catch (CertificateException e) {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Certificate exception");
