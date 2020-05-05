@@ -22,7 +22,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * @author Bob Adair - Initial contribution
  */
-public class ZoneStatus {
+public class ZoneStatus extends AbstractBodyType {
     private static final Pattern ZONE_HREF_PATTERN = Pattern.compile("/zone/([0-9]+)");
 
     @SerializedName("href")
