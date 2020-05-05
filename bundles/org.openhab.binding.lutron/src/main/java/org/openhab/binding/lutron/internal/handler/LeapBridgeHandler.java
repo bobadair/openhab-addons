@@ -37,6 +37,8 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -62,10 +64,12 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.lutron.internal.config.LeapBridgeConfig;
 import org.openhab.binding.lutron.internal.discovery.LeapDeviceDiscoveryService;
+import org.openhab.binding.lutron.internal.protocol.leap.AbstractBodyType;
 import org.openhab.binding.lutron.internal.protocol.leap.ButtonGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.Device;
 import org.openhab.binding.lutron.internal.protocol.leap.Href;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
+import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroupStatus;
 import org.openhab.binding.lutron.internal.protocol.leap.Request;
 import org.openhab.binding.lutron.internal.protocol.leap.ZoneStatus;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
@@ -81,6 +85,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 /**
  * Bridge handler responsible for communicating with Lutron hubs using LEAP protocol, such as Caseta and RA2 Select.
@@ -474,6 +479,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                     break;
                 case "MultipleOccupancyGroupDefinition":
                     break;
+                case "MultipleOccupancyGroupStatus":
+                    handleMultipleOccupancyGroupStatus(body);
+                    break;
                 case "MultipleDeviceDefinition":
                     handleMultipleDeviceDefinition(body);
                     break;
@@ -483,8 +491,6 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 case "MultipleAreaDefinition":
                     break;
                 case "MultipleVirtualButtonDefinition":
-                    break;
-                case "MultipleOccupancyGroupStatus":
                     break;
                 case "OnePingResponse":
                     handleOnePingResponse(body);
@@ -499,10 +505,60 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
+    private @Nullable <T extends AbstractBodyType> T parseBodySingle(JsonObject messageBody, String memberName,
+            Class<T> type) {
+        try {
+            if (messageBody.has(memberName)) {
+                JsonObject jsonObject = messageBody.get(memberName).getAsJsonObject();
+                T obj = gson.fromJson(jsonObject, type);
+                return obj;
+            } else {
+                logger.debug("Member name {} not found in JSON message", memberName);
+                return null;
+            }
+        } catch (IllegalStateException | JsonSyntaxException e) {
+            logger.debug("Error parsing JSON message: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private <T extends AbstractBodyType> List<T> parseBodyMultiple(JsonObject messageBody, String memberName,
+            Class<T> type) {
+        List<T> objList = new LinkedList<T>();
+        try {
+            if (messageBody.has(memberName)) {
+                JsonArray jsonArray = messageBody.get(memberName).getAsJsonArray();
+
+                for (JsonElement element : jsonArray) {
+                    JsonObject jsonObject = element.getAsJsonObject();
+                    T obj = gson.fromJson(jsonObject, type);
+                    objList.add(obj);
+                }
+                return objList;
+            } else {
+                logger.debug("Member name {} not found in JSON message", memberName);
+                return objList;
+            }
+        } catch (IllegalStateException | JsonSyntaxException e) {
+            logger.debug("Error parsing JSON message: {}", e.getMessage());
+            return objList;
+        }
+    }
+
+    private void handleMultipleOccupancyGroupStatus(JsonObject messageBody) {
+        List<OccupancyGroupStatus> statusList = parseBodyMultiple(messageBody, "OccupancyGroupStatuses",
+                OccupancyGroupStatus.class);
+        for (OccupancyGroupStatus status : statusList) {
+            logger.debug("OccupancyGroup: {} Status: {}", status.occupancyGroup.href, status.occupancyStatus);
+            // TODO: Dispatch OccupancyGroup status updates
+        }
+    }
+
     private void handleOneZoneStatus(JsonObject messageBody) {
-        JsonObject status = messageBody.get("ZoneStatus").getAsJsonObject();
-        ZoneStatus zoneStatus = gson.fromJson(status, ZoneStatus.class);
-        handleZoneUpdate(zoneStatus);
+        ZoneStatus zoneStatus = parseBodySingle(messageBody, "ZoneStatus", ZoneStatus.class);
+        if (zoneStatus != null) {
+            handleZoneUpdate(zoneStatus);
+        }
     }
 
     private void handleOnePingResponse(JsonObject messageBody) {
@@ -510,14 +566,11 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     }
 
     private void handleMultipleDeviceDefinition(JsonObject messageBody) {
-        // TODO: add try/catch here
-        JsonArray devices = messageBody.get("Devices").getAsJsonArray();
+        List<Device> deviceList = parseBodyMultiple(messageBody, "Devices", Device.class);
         synchronized (zoneMapLock) {
             zoneToDevice.clear();
             deviceToZone.clear();
-            for (JsonElement element : devices) {
-                JsonObject jsonDeviceObj = element.getAsJsonObject();
-                Device device = gson.fromJson(jsonDeviceObj, Device.class);
+            for (Device device : deviceList) {
                 Integer zoneid = device.getZone();
                 Integer deviceid = device.getDevice();
                 logger.debug("Found device: {} id: {} zone: {}", device.name, deviceid, zoneid);
@@ -527,18 +580,18 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 }
             }
         }
+
         updateStatus(ThingStatus.ONLINE); // TODO: Move this
 
         if (discoveryService != null) {
+            // TODO: change to pass object list
             discoveryService.processMultipleDeviceDefinition(messageBody);
         }
     }
 
     private void handleMultipleButtonGroupDefinition(JsonObject messageBody) {
-        JsonArray buttonGroups = messageBody.get("ButtonGroups").getAsJsonArray();
-        for (JsonElement element : buttonGroups) {
-            JsonObject jsonButtonGroupObj = element.getAsJsonObject();
-            ButtonGroup buttonGroup = gson.fromJson(jsonButtonGroupObj, ButtonGroup.class);
+        List<ButtonGroup> buttonGroupList = parseBodyMultiple(messageBody, "ButtonGroups", ButtonGroup.class);
+        for (ButtonGroup buttonGroup : buttonGroupList) {
             logger.trace("Found ButtonGroup: {} parent device: {}", buttonGroup.getButtonGroup(),
                     buttonGroup.getParentDevice());
             for (Href button : buttonGroup.buttons) {

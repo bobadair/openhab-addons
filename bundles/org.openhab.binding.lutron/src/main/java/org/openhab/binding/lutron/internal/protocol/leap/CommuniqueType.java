@@ -14,6 +14,8 @@ package org.openhab.binding.lutron.internal.protocol.leap;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * LEAP CommuniqueType enum
  *
@@ -22,24 +24,38 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 @NonNullByDefault
 public enum CommuniqueType {
     // Requests
+    @SerializedName("CreateRequest")
     CREATEREQUEST("CreateRequest"),
+    @SerializedName("ReadRequest")
     READREQUEST("ReadRequest"),
+    @SerializedName("UpdateRequest")
     UPDATEREQUEST("UpdateRequest"),
+    @SerializedName("DeleteRequest")
     DELETEREQUEST("DeleteRequest"), // ?
+    @SerializedName("SubscribeRequest")
     SUBSCRIBEREQUEST("SubscribeRequest"),
+    @SerializedName("UnubscribeRequest")
     UNSUBSCRIBEREQUEST("UnubscribeRequest"),
+    @SerializedName("Execute")
     EXECUTEREQUEST("Execute"),
 
     // Responses
+    @SerializedName("CreateResponse")
     CREATERESPONSE("CreateResponse"),
+    @SerializedName("ReadResponse")
     READRESPONSE("ReadResponse"),
+    @SerializedName("UpdateResponse")
     UPDATERESPONSE("UpdateResponse"),
+    @SerializedName("DeleteResponse")
     DELETERESPONSE("DeleteResponse"), // ?
+    @SerializedName("SubscribeResponse")
     SUBSCRIBERESPONSE("SubscribeResponse"),
+    @SerializedName("UnsubscribeResponse")
     UNSUBSCRIBERESPONSE("UnsubscribeResponse"),
+    @SerializedName("ExecuteResponse")
     EXECUTERESPONSE("ExecuteResponse"); // ?
 
-    private final String string;
+    private transient final String string;
 
     CommuniqueType(String string) {
         this.string = string;
