@@ -65,7 +65,7 @@ public enum MessageBodyType {
     OneZoneDefinition("OneZoneDefinition"),
     OneZoneStatus("OneZoneStatus");
 
-    private final String string;
+    private transient final String string;
 
     MessageBodyType(String string) {
         this.string = string;

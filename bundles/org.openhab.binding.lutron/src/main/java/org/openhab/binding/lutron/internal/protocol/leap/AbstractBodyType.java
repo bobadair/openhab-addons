@@ -12,23 +12,11 @@
  */
 package org.openhab.binding.lutron.internal.protocol.leap;
 
-import com.google.gson.annotations.SerializedName;
-
 /**
- * LEAP OccupancyGroupStatus object
+ *
+ * Abstract base class for LEAP message body objects
  *
  * @author Bob Adair - Initial contribution
  */
-public class OccupancyGroupStatus extends AbstractBodyType {
-    @SerializedName("href")
-    public String href;
-
-    @SerializedName("OccupancyGroup")
-    public Href occupancyGroup;
-
-    @SerializedName("OccupancyStatus")
-    public String occupancyStatus; // Occupied, Unoccupied, or Unknown
-
-    public OccupancyGroupStatus() {
-    }
+public abstract class AbstractBodyType {
 }
