@@ -14,6 +14,8 @@ package org.openhab.binding.lutron.internal.protocol.leap;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * LEAP CommandType enum
  *
@@ -21,16 +23,30 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
  */
 @NonNullByDefault
 public enum CommandType {
+    @SerializedName("GoToDimmedLevel")
     GOTODIMMEDLEVEL("GoToDimmedLevel"),
+    @SerializedName("GoToFanSpeed")
     GOTOFANSPEED("GoToFanSpeed"),
+    @SerializedName("GoToLevel")
     GOTOLEVEL("GoToLevel"),
+    @SerializedName("PressAndHold")
     PRESSANDHOLD("PressAndHold"),
+    @SerializedName("PressAndRelease")
     PRESSANDRELEASE("PressAndRelease"),
+    @SerializedName("Release")
     RELEASE("Release"),
+    @SerializedName("ShadeLimitLower")
     SHADELIMITLOWER("ShadeLimitLower"),
-    SHADELIMITRAISE("ShadeLimitRaise");
+    @SerializedName("ShadeLimitRaise")
+    SHADELIMITRAISE("ShadeLimitRaise"),
+    @SerializedName("Raise")
+    RAISE("Raise"),
+    @SerializedName("Lower")
+    LOWER("Lower"),
+    @SerializedName("Stop")
+    STOP("Stop");
 
-    private final String string;
+    private transient final String string;
 
     CommandType(String string) {
         this.string = string;
