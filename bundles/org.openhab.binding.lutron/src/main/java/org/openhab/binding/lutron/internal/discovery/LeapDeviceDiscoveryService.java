@@ -13,7 +13,7 @@
 
 package org.openhab.binding.lutron.internal.discovery;
 
-import static org.openhab.binding.lutron.internal.LutronBindingConstants.INTEGRATION_ID;
+import static org.openhab.binding.lutron.internal.LutronBindingConstants.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,7 +62,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
 
     @Override
     protected void startScan() {
-        // TODO Auto-generated method stub
+        // TODO: Query bridge
     }
 
     public void processMultipleDeviceDefinition(JsonObject messageBody) {
@@ -72,16 +72,35 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                 JsonObject jsonDeviceObj = element.getAsJsonObject();
                 Device device = gson.fromJson(jsonDeviceObj, Device.class);
                 // Integer zoneid = device.getZone();
-                Integer deviceid = device.getDevice();
-                if (deviceid > 0) {
-                    logger.trace("Discovered device: {} type: {} id: {}", device.name, device.deviceType, deviceid);
+                Integer deviceId = device.getDevice();
+                String label = device.getFullyQualifiedName();
+                if (deviceId > 0) {
+                    logger.trace("Discovered device: {} type: {} id: {}", label, device.deviceType, deviceId);
                     if (device.deviceType != null) {
                         switch (device.deviceType) {
                             case "SmartBridge":
+                                notifyDiscovery(THING_TYPE_VIRTUALKEYPAD, deviceId, label, "model", "Caseta");
                                 break;
                             case "WallDimmer":
+                                notifyDiscovery(THING_TYPE_DIMMER, deviceId, label);
+                                break;
+                            case "WallSwitch":
+                                notifyDiscovery(THING_TYPE_SWITCH, deviceId, label);
+                                break;
+                            case "Pico2Button":
+                                notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "2B");
+                                break;
+                            case "Pico2ButtonRaiseLower":
+                                notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "2BRL");
                                 break;
                             case "Pico3ButtonRaiseLower":
+                                notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "3BRL");
+                                break;
+                            case "SerenaRollerShade":
+                                notifyDiscovery(THING_TYPE_SHADE, deviceId, label);
+                                break;
+                            case "RPSOccupancySensor":
+                                notifyDiscovery(THING_TYPE_OCCUPANCYSENSOR, deviceId, label);
                                 break;
                             default:
                                 break;
