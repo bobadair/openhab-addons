@@ -23,13 +23,20 @@ import java.io.OutputStreamWriter;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.KeyFactory;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,6 +50,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -135,6 +143,32 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 .create();
     }
 
+    private void loadCertFromFile(String fileName, KeyStore keystore, String alias)
+            throws CertificateException, FileNotFoundException, KeyStoreException {
+        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+        FileInputStream certStream = new FileInputStream(fileName);
+
+        Collection<? extends java.security.cert.Certificate> certCollection = certFactory
+                .generateCertificates(certStream);
+        Iterator<? extends java.security.cert.Certificate> i = certCollection.iterator();
+        while (i.hasNext()) {
+            java.security.cert.Certificate cert = i.next();
+            logger.trace("Loaded certificate: {}", cert);
+            keystore.setCertificateEntry(alias, cert);
+        }
+    }
+
+    private void loadKeyFromFile(String fileName, KeyStore keystore, String alias)
+            throws NoSuchAlgorithmException, FileNotFoundException, IOException, InvalidKeySpecException {
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        FileInputStream keyStream = new FileInputStream(fileName);
+        byte[] keyBytes = IOUtils.toByteArray(keyStream);
+        keyStream.close();
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+        PrivateKey key = keyFactory.generatePrivate(spec);
+        // keystore.setKeyEntry(alias, key, null, chain);
+    }
+
     @Override
     public void initialize() {
         SSLContext sslContext;
@@ -156,24 +190,21 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 // Create keystore
                 // KeyStore keystore = KeyStore.getInstance("JKS");
                 KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-                // keystore.load(new FileInputStream("C:\\Users\\Bob\\Documents\\leap\\lutron.keystore"),
-                // "secret".toCharArray());
-                keystore.load(new FileInputStream(config.keystore), config.keystorePassword.toCharArray());
-                // keystore.load(null, null);
-                // keystore.setCertificateEntry(alias, cert);
 
-                // Read certificate(s) in to certCollection but don't do anything with them yet
-                // CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-                // FileInputStream clientCertStream = new FileInputStream(config.clientCert);
-                //
-                // Collection<? extends java.security.cert.Certificate> certCollection = certFactory
-                // .generateCertificates(clientCertStream);
-                // Iterator<? extends java.security.cert.Certificate> i = certCollection.iterator();
-                // while (i.hasNext()) {
-                // java.security.cert.Certificate cert = i.next();
-                // logger.trace("Loaded certificate: {}", cert);
-                // // TODO: load into keystore
-                // }
+                if (config.keystore != null) {
+                    // Load keystore from keystore file
+                    keystore.load(new FileInputStream(config.keystore), config.keystorePassword.toCharArray());
+                } else if (config.clientCert != null && config.clientKey != null && config.bridgeCert != null) {
+                    // Creat empty keystore and load key and certificates
+                    keystore.load(null, null);
+                    // loadCertFromFile(config.clientCert, keystore, "caseta");
+                    // loadKeyFromFile(config.clientKey, keystore, "caseta");
+                    // loadCertFromFile(config.bridgeCert, keystore, "caseta-bridge");
+                } else {
+                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                            "Neither keystore nor key files configured");
+                    return;
+                }
 
                 logger.trace("Initializing SSL Context");
                 // KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509"); // X509 not available
@@ -260,7 +291,11 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
         sendCommand(new LeapCommand(Request.getDevices()));
         sendCommand(new LeapCommand(Request.getButtonGroups()));
-        sendCommand(new LeapCommand(Request.subscribeOccupancyGroups()));
+        sendCommand(new LeapCommand(Request.subscribeOccupancyGroupStatus()));
+
+        // Add these temporarily
+        sendCommand(new LeapCommand(Request.getAreas()));
+        sendCommand(new LeapCommand(Request.getOccupancyGroups()));
 
         // Delay updating status to online until device/zone info received
 
