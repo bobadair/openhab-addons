@@ -83,7 +83,7 @@ public class Request {
         return request(CommuniqueType.READREQUEST, String.format("/zone/%d/status", zone));
     }
 
-    public static String subscribeOccupancyGroups() {
+    public static String subscribeOccupancyGroupStatus() {
         return request(CommuniqueType.SUBSCRIBEREQUEST, "/occupancygroup/status");
     }
 }
