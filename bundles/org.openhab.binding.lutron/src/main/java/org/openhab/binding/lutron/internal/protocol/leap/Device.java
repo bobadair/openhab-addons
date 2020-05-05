@@ -95,4 +95,12 @@ public class Device {
         }
         return 0;
     }
+
+    public String getFullyQualifiedName() {
+        if (fullyQualifiedName != null && fullyQualifiedName.length > 0) {
+            return String.join(" ", fullyQualifiedName);
+        } else {
+            return "";
+        }
+    }
 }
