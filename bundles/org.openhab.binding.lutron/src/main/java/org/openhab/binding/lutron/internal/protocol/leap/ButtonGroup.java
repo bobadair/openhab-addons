@@ -22,7 +22,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * @author Bob Adair - Initial contribution
  */
-public class ButtonGroup {
+public class ButtonGroup extends AbstractBodyType {
     private static final Pattern DEVICE_HREF_PATTERN = Pattern.compile("/device/([0-9]+)");
     private static final Pattern BUTTON_HREF_PATTERN = Pattern.compile("/button/([0-9]+)");
     private static final Pattern BUTTONGROUP_HREF_PATTERN = Pattern.compile("/buttongroup/([0-9]+)");

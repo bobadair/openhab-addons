@@ -22,7 +22,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * @author Bob Adair - Initial contribution
  */
-public class Device {
+public class Device extends AbstractBodyType {
     private static final Pattern ZONE_HREF_PATTERN = Pattern.compile("/zone/([0-9]+)");
     private static final Pattern DEVICE_HREF_PATTERN = Pattern.compile("/device/([0-9]+)");
 
