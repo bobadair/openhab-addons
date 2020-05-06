@@ -53,7 +53,9 @@ public enum CommuniqueType {
     @SerializedName("UnsubscribeResponse")
     UNSUBSCRIBERESPONSE("UnsubscribeResponse"),
     @SerializedName("ExecuteResponse")
-    EXECUTERESPONSE("ExecuteResponse"); // ?
+    EXECUTERESPONSE("ExecuteResponse"), // ?
+    @SerializedName("ExceptionResponse")
+    EXCEPTIONRESPONSE("ExceptionResponse");
 
     private transient final String string;
 

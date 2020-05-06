@@ -102,6 +102,8 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     private static final String TEST_DATA_FILE = ""; // "C:\\Users\\Bob\\Documents\\leapdata.json";
     private static final String TEST_OUTPUT_FILE = ""; // "C:\\Users\\Bob\\Documents\\leapdata.out";
 
+    private static final String STATUS_INITIALIZING = "Initializing";
+
     private final Logger logger = LoggerFactory.getLogger(LeapBridgeHandler.class);
 
     private @NonNullByDefault({}) LeapBridgeConfig config;
@@ -367,13 +369,16 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     private void senderThreadJob() {
         logger.debug("Command sender thread started");
         try {
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted() && writer != null) {
                 LeapCommand command = sendQueue.take();
-                logger.debug("Sending command {}", command);
+                logger.trace("Sending command {}", command);
 
                 try {
-                    writer.write(command.toString() + "\n");
-                    writer.flush();
+                    BufferedWriter writer = this.writer;
+                    if (writer != null) {
+                        writer.write(command.toString() + "\n");
+                        writer.flush();
+                    }
                 } catch (IOException e) {
                     logger.warn("Communication error, will try to reconnect. Error: {}", e.getMessage());
                     updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
@@ -387,6 +392,8 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            logger.debug("Command sender thread exiting");
         }
     }
 
@@ -396,7 +403,6 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         try {
             BufferedReader reader = this.reader;
             while (!Thread.interrupted() && reader != null && (msg = reader.readLine()) != null) {
-                // logger.trace("Received msg: {}", msg);
                 handleMessage(msg);
             }
             if (msg == null) {
@@ -424,12 +430,14 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             JsonObject message = (JsonObject) new JsonParser().parse(msg);
 
             if (!message.has("CommuniqueType")) {
-                logger.debug("No CommuniqueType found in message");
+                logger.debug("No CommuniqueType found in message: {}", msg);
                 return;
             }
 
             String communiqueType = message.get("CommuniqueType").getAsString();
-            logger.trace("CommuniqueType: {}", communiqueType);
+            logger.debug("Received CommuniqueType: {}", communiqueType);
+
+            // CommuniqueType type = CommuniqueType.valueOf(communiqueType);
 
             // Got a good message, so cancel reconnect task.
             // TODO: add locking
@@ -440,17 +448,22 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             }
 
             switch (communiqueType) {
-                case "SubscribeResponse":
-                    return;
-                case "UnsubscribeResponse":
-                    return;
-                case "ExceptionResponse":
-                    return;
                 case "CreateResponse":
                     return;
                 case "ReadResponse":
                     handleReadResponseMessage(message);
                     break;
+                case "UpdateResponse":
+                    break;
+                case "SubscribeResponse":
+                    // Subscribe responses can contain bodies with data
+                    handleReadResponseMessage(message);
+                    return;
+                case "UnsubscribeResponse":
+                    return;
+                case "ExceptionResponse":
+                    handleExceptionResponse(message);
+                    return;
                 default:
                     logger.debug("Unknown CommuniqueType received: {}", communiqueType);
                     break;
@@ -461,10 +474,23 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
+    private void handleExceptionResponse(JsonObject message) {
+        // TODO Auto-generated method stub
+    }
+
     private void handleReadResponseMessage(JsonObject message) {
         try {
             JsonObject header = message.get("Header").getAsJsonObject();
+
+            if (!header.has("MessageBodyType")) {
+                logger.trace("No MessageBodyType in header");
+                return;
+            }
             String messageBodyType = header.get("MessageBodyType").getAsString();
+            // if (messageBodyType == null) {
+            // logger.trace("No MessageBodyType in header");
+            // return;
+            // }
             logger.trace("MessageBodyType: {}", messageBodyType);
 
             if (!message.has("Body")) {
@@ -580,14 +606,23 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 }
             }
         }
-
         updateStatus(ThingStatus.ONLINE); // TODO: Move this
+        // checkMapsLoaded();
 
         if (discoveryService != null) {
-            // TODO: change to pass object list
-            discoveryService.processMultipleDeviceDefinition(messageBody);
+            discoveryService.processMultipleDeviceDefinition(messageBody);// TODO: change to pass object list
         }
     }
+
+    // TODO
+    // private void checkMapsLoaded() {
+    // ThingStatusInfo statusInfo = getThing().getStatusInfo();
+    // if (statusInfo.getStatus() == ThingStatus.OFFLINE && STATUS_INITIALIZING.equals(statusInfo.getDescription())) {
+    // if (devicesLoaded && areasLoaded && zonesLoaded) {
+    // updateStatus(ThingStatus.ONLINE);
+    // }
+    // }
+    // }
 
     private void handleMultipleButtonGroupDefinition(JsonObject messageBody) {
         List<ButtonGroup> buttonGroupList = parseBodyMultiple(messageBody, "ButtonGroups", ButtonGroup.class);
