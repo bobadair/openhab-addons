@@ -24,7 +24,9 @@ import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
+import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +38,6 @@ import org.slf4j.LoggerFactory;
  */
 @NonNullByDefault
 public class SwitchHandler extends LutronHandler {
-    private static final Integer ACTION_ZONELEVEL = 1;
-
     private final Logger logger = LoggerFactory.getLogger(SwitchHandler.class);
 
     private int integrationId;
@@ -67,7 +67,9 @@ public class SwitchHandler extends LutronHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.UNKNOWN, ThingStatusDetail.NONE, "Awaiting initial response");
-            queryOutput(ACTION_ZONELEVEL); // handleUpdate() will set thing status to online when response arrives
+            queryOutput(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL); // handleUpdate() will set thing status to
+                                                                            // online when
+            // response arrives
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
@@ -77,9 +79,9 @@ public class SwitchHandler extends LutronHandler {
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (channelUID.getId().equals(CHANNEL_SWITCH)) {
             if (command.equals(OnOffType.ON)) {
-                output(ACTION_ZONELEVEL, 100);
+                output(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL, 100);
             } else if (command.equals(OnOffType.OFF)) {
-                output(ACTION_ZONELEVEL, 0);
+                output(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL, 0);
             }
         }
     }
@@ -92,7 +94,7 @@ public class SwitchHandler extends LutronHandler {
     @Override
     public void handleUpdate(LutronCommandType type, String... parameters) {
         if (type == LutronCommandType.OUTPUT && parameters.length > 1
-                && ACTION_ZONELEVEL.toString().equals(parameters[0])) {
+                && LutronCommand.ACTION_ZONELEVEL.toString().equals(parameters[0])) {
             BigDecimal level = new BigDecimal(parameters[1]);
             if (getThing().getStatus() == ThingStatus.UNKNOWN) {
                 updateStatus(ThingStatus.ONLINE);
@@ -105,7 +107,7 @@ public class SwitchHandler extends LutronHandler {
     public void channelLinked(ChannelUID channelUID) {
         if (channelUID.getId().equals(CHANNEL_SWITCH)) {
             // Refresh state when new item is linked.
-            queryOutput(ACTION_ZONELEVEL);
+            queryOutput(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL);
         }
     }
 }
