@@ -36,7 +36,9 @@ import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.lutron.internal.KeypadComponent;
 import org.openhab.binding.lutron.internal.keypadconfig.KeypadConfig;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
+import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,17 +48,6 @@ import org.slf4j.LoggerFactory;
  * @author Bob Adair - Initial contribution, based partly on Allan Tong's KeypadHandler class
  */
 public abstract class BaseKeypadHandler extends LutronHandler {
-
-    protected static final Integer ACTION_PRESS = 3;
-    protected static final Integer ACTION_RELEASE = 4;
-    protected static final Integer ACTION_HOLD = 5;
-    protected static final Integer ACTION_LED_STATE = 9;
-
-    protected static final Integer LED_OFF = 0;
-    protected static final Integer LED_ON = 1;
-    protected static final Integer LED_FLASH = 2; // Same as 1 on RA2 keypads
-    protected static final Integer LED_RAPIDFLASH = 3; // Same as 1 on RA2 keypads
-
     private final Logger logger = LoggerFactory.getLogger(BaseKeypadHandler.class);
 
     protected List<KeypadComponent> buttonList = new ArrayList<>();
@@ -75,6 +66,7 @@ public abstract class BaseKeypadHandler extends LutronHandler {
     private final Object asyncInitLock = new Object();
 
     protected KeypadConfig kp;
+    protected TargetType commandTargetType = TargetType.KEYPAD; // For LEAP bridge
 
     public BaseKeypadHandler(Thing thing) {
         super(thing);
@@ -261,7 +253,7 @@ public abstract class BaseKeypadHandler extends LutronHandler {
                     // To reduce query volume, query only 1st LED and LEDs with linked channels.
                     for (KeypadComponent component : ledList) {
                         if (component.id() == ledList.get(0).id() || isLinked(channelFromComponent(component.id()))) {
-                            queryDevice(component.id(), ACTION_LED_STATE);
+                            queryDevice(commandTargetType, component.id(), LutronCommand.ACTION_LED_STATE);
                         }
                     }
                 }
@@ -290,12 +282,12 @@ public abstract class BaseKeypadHandler extends LutronHandler {
         // For LEDs, handle RefreshType and OnOffType commands
         if (isLed(componentID)) {
             if (command instanceof RefreshType) {
-                queryDevice(componentID, ACTION_LED_STATE);
+                queryDevice(commandTargetType, componentID, LutronCommand.ACTION_LED_STATE);
             } else if (command instanceof OnOffType) {
                 if (command == OnOffType.ON) {
-                    device(componentID, ACTION_LED_STATE, LED_ON);
+                    device(commandTargetType, componentID, LutronCommand.ACTION_LED_STATE, LutronCommand.LED_ON);
                 } else if (command == OnOffType.OFF) {
-                    device(componentID, ACTION_LED_STATE, LED_OFF);
+                    device(commandTargetType, componentID, LutronCommand.ACTION_LED_STATE, LutronCommand.LED_OFF);
                 }
             } else {
                 logger.warn("Invalid command {} received for channel {} device {}", command, channelUID,
@@ -308,12 +300,12 @@ public abstract class BaseKeypadHandler extends LutronHandler {
         if (isButton(componentID)) {
             if (command instanceof OnOffType) {
                 if (command == OnOffType.ON) {
-                    device(componentID, ACTION_PRESS);
+                    device(commandTargetType, componentID, LutronCommand.ACTION_PRESS);
                     if (autoRelease) {
-                        device(componentID, ACTION_RELEASE);
+                        device(commandTargetType, componentID, LutronCommand.ACTION_RELEASE);
                     }
                 } else if (command == OnOffType.OFF) {
-                    device(componentID, ACTION_RELEASE);
+                    device(commandTargetType, componentID, LutronCommand.ACTION_RELEASE);
                 }
             } else {
                 logger.warn("Invalid command type {} received for channel {} device {}", command, channelUID,
@@ -342,7 +334,7 @@ public abstract class BaseKeypadHandler extends LutronHandler {
 
         // if this channel is for an LED, query the Lutron controller for the current state
         if (isLed(id)) {
-            queryDevice(id, ACTION_LED_STATE);
+            queryDevice(commandTargetType, id, LutronCommand.ACTION_LED_STATE);
         }
         // Button and CCI state can't be queried, only monitored for updates.
         // Init button state to OFF on channel init.
@@ -368,16 +360,16 @@ public abstract class BaseKeypadHandler extends LutronHandler {
             ChannelUID channelUID = channelFromComponent(component);
 
             if (channelUID != null) {
-                if (ACTION_LED_STATE.toString().equals(parameters[1]) && parameters.length >= 3) {
+                if (LutronCommand.ACTION_LED_STATE.toString().equals(parameters[1]) && parameters.length >= 3) {
                     if (getThing().getStatus() == ThingStatus.UNKNOWN) {
                         updateStatus(ThingStatus.ONLINE); // set thing status online if this is an initial response
                     }
-                    if (LED_ON.toString().equals(parameters[2])) {
+                    if (LutronCommand.LED_ON.toString().equals(parameters[2])) {
                         updateState(channelUID, OnOffType.ON);
-                    } else if (LED_OFF.toString().equals(parameters[2])) {
+                    } else if (LutronCommand.LED_OFF.toString().equals(parameters[2])) {
                         updateState(channelUID, OnOffType.OFF);
                     }
-                } else if (ACTION_PRESS.toString().equals(parameters[1])) {
+                } else if (LutronCommand.ACTION_PRESS.toString().equals(parameters[1])) {
                     if (isButton(component)) {
                         updateState(channelUID, OnOffType.ON);
                         if (autoRelease) {
@@ -386,13 +378,13 @@ public abstract class BaseKeypadHandler extends LutronHandler {
                     } else { // component is CCI
                         updateState(channelUID, OpenClosedType.CLOSED);
                     }
-                } else if (ACTION_RELEASE.toString().equals(parameters[1])) {
+                } else if (LutronCommand.ACTION_RELEASE.toString().equals(parameters[1])) {
                     if (isButton(component)) {
                         updateState(channelUID, OnOffType.OFF);
                     } else { // component is CCI
                         updateState(channelUID, OpenClosedType.OPEN);
                     }
-                } else if (ACTION_HOLD.toString().equals(parameters[1])) {
+                } else if (LutronCommand.ACTION_HOLD.toString().equals(parameters[1])) {
                     updateState(channelUID, OnOffType.OFF); // Signal a release if we receive a hold code as we will not
                                                             // get a subsequent release.
                 }
