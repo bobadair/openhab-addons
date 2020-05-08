@@ -50,6 +50,13 @@ public class Request {
         return String.format(request, virtualbutton, command.toString());
     }
 
+    public static String zoneCommand(int zone, CommandType commandType) {
+        String request = "{\"CommuniqueType\": \"CreateRequest\","
+                + "\"Header\": {\"Url\": \"/zone/%d/commandprocessor\"}," + "\"Body\": {" + "\"Command\": {"
+                + "\"CommandType\": \"%s\"}}}";
+        return String.format(request, zone, commandType.toString());
+    }
+
     public static String request(CommuniqueType cType, String url) {
         String request = "{\"CommuniqueType\": \"%s\",\"Header\": {\"Url\": \"%s\"}}";
         return String.format(request, cType.toString(), url);
