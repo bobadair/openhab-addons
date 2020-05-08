@@ -67,6 +67,7 @@ import org.openhab.binding.lutron.internal.discovery.LeapDeviceDiscoveryService;
 import org.openhab.binding.lutron.internal.protocol.leap.AbstractBodyType;
 import org.openhab.binding.lutron.internal.protocol.leap.ButtonGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.CommandType;
+import org.openhab.binding.lutron.internal.protocol.leap.CommuniqueType;
 import org.openhab.binding.lutron.internal.protocol.leap.Device;
 import org.openhab.binding.lutron.internal.protocol.leap.Href;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
@@ -302,9 +303,11 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         sendCommand(new LeapCommand(Request.getButtonGroups()));
         sendCommand(new LeapCommand(Request.subscribeOccupancyGroupStatus()));
 
-        // Add these temporarily
+        // Add these test queries temporarily (TODO: Remove)
         sendCommand(new LeapCommand(Request.getAreas()));
         sendCommand(new LeapCommand(Request.getOccupancyGroups()));
+        sendCommand(new LeapCommand(Request.request(CommuniqueType.READREQUEST, "/timeclock")));
+        sendCommand(new LeapCommand(Request.request(CommuniqueType.READREQUEST, "/timeclockevent")));
 
         // Delay updating status to online until device/zone info received
 
@@ -696,19 +699,40 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
     private void execOutputToLeap(LutronCommand command) {
         int action = command.getNumberParameter(0);
-        int value = command.getNumberParameter(1);
+        Integer zone = deviceToZone(command.getIntegrationId());
+        int zoneInt;
 
-        if (action == LutronCommand.ACTION_ZONELEVEL) {
-            Integer zone = deviceToZone(command.getIntegrationId());
-            if (zone != null) {
-                sendCommand(new LeapCommand(Request.goToLevel(zone, value)));
+        if (zone == null) {
+            logger.debug("Dropping output command for ID {}. No zone mapping available.", command.getIntegrationId());
+            return;
+        } else {
+            zoneInt = zone;
+        }
+
+        if (command.targetType == TargetType.SWITCH || command.targetType == TargetType.DIMMER) {
+            if (action == LutronCommand.ACTION_ZONELEVEL) {
+                int value = command.getNumberParameter(1);
+                sendCommand(new LeapCommand(Request.goToLevel(zoneInt, value)));
             } else {
-                logger.debug("Dropping set output command for ID {}. No zone mapping available.",
-                        command.getIntegrationId());
+                logger.debug("Dropping unsupported switch action: {}", command);
+                return;
+            }
+        } else if (command.targetType == TargetType.SHADE) {
+            if (action == LutronCommand.ACTION_ZONELEVEL) {
+                int value = command.getNumberParameter(1);
+                sendCommand(new LeapCommand(Request.goToLevel(zoneInt, value)));
+            } else if (action == LutronCommand.ACTION_STARTRAISING) {
+                sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.RAISE)));
+            } else if (action == LutronCommand.ACTION_STARTLOWERING) {
+                sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.LOWER)));
+            } else if (action == LutronCommand.ACTION_STOP) {
+                sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.STOP)));
+            } else {
+                logger.debug("Dropping unsupported shade action: {}", command);
+                return;
             }
         } else {
-            logger.warn("Unable to process set output command {} since action != 1", command);
-            return;
+            logger.debug("Dropping command for unsupported output: {}", command);
         }
     }
 
