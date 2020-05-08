@@ -27,7 +27,9 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
+import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +40,6 @@ import org.slf4j.LoggerFactory;
  */
 @NonNullByDefault
 public class ShadeHandler extends LutronHandler {
-    private static final Integer ACTION_ZONELEVEL = 1;
-    private static final Integer ACTION_STARTRAISING = 2;
-    private static final Integer ACTION_STARTLOWERING = 3;
-    private static final Integer ACTION_STOP = 4;
-    private static final Integer ACTION_POSITION_UPDATE = 32; // undocumented in integration protocol guide
     private static final Integer PARAMETER_POSITION_UPDATE = 2; // undocumented in integration protocol guide
 
     private final Logger logger = LoggerFactory.getLogger(ShadeHandler.class);
@@ -79,7 +76,9 @@ public class ShadeHandler extends LutronHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.UNKNOWN, ThingStatusDetail.NONE, "Awaiting initial response");
-            queryOutput(ACTION_ZONELEVEL); // handleUpdate() will set thing status to online when response arrives
+            queryOutput(TargetType.SHADE, LutronCommand.ACTION_ZONELEVEL); // handleUpdate() will set thing status to
+                                                                           // online when
+            // response arrives
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
@@ -89,7 +88,7 @@ public class ShadeHandler extends LutronHandler {
     public void channelLinked(ChannelUID channelUID) {
         // Refresh state when new item is linked.
         if (channelUID.getId().equals(CHANNEL_SHADELEVEL)) {
-            queryOutput(ACTION_ZONELEVEL);
+            queryOutput(TargetType.SHADE, LutronCommand.ACTION_ZONELEVEL);
         }
     }
 
@@ -98,15 +97,15 @@ public class ShadeHandler extends LutronHandler {
         if (channelUID.getId().equals(CHANNEL_SHADELEVEL)) {
             if (command instanceof PercentType) {
                 int level = ((PercentType) command).intValue();
-                output(ACTION_ZONELEVEL, level, 0);
+                output(TargetType.SHADE, LutronCommand.ACTION_ZONELEVEL, level, 0);
             } else if (command.equals(UpDownType.UP)) {
-                output(ACTION_STARTRAISING);
+                output(TargetType.SHADE, LutronCommand.ACTION_STARTRAISING);
             } else if (command.equals(UpDownType.DOWN)) {
-                output(ACTION_STARTLOWERING);
+                output(TargetType.SHADE, LutronCommand.ACTION_STARTLOWERING);
             } else if (command.equals(StopMoveType.STOP)) {
-                output(ACTION_STOP);
+                output(TargetType.SHADE, LutronCommand.ACTION_STOP);
             } else if (command instanceof RefreshType) {
-                queryOutput(ACTION_ZONELEVEL);
+                queryOutput(TargetType.SHADE, LutronCommand.ACTION_ZONELEVEL);
             }
         }
     }
@@ -114,14 +113,14 @@ public class ShadeHandler extends LutronHandler {
     @Override
     public void handleUpdate(LutronCommandType type, String... parameters) {
         if (type == LutronCommandType.OUTPUT && parameters.length >= 2) {
-            if (ACTION_ZONELEVEL.toString().equals(parameters[0])) {
+            if (LutronCommand.ACTION_ZONELEVEL.toString().equals(parameters[0])) {
                 BigDecimal level = new BigDecimal(parameters[1]);
                 if (getThing().getStatus() == ThingStatus.UNKNOWN) {
                     updateStatus(ThingStatus.ONLINE);
                 }
                 logger.trace("Shade {} received zone level: {}", getIntegrationId(), level);
                 updateState(CHANNEL_SHADELEVEL, new PercentType(level));
-            } else if (ACTION_POSITION_UPDATE.toString().equals(parameters[0])
+            } else if (LutronCommand.ACTION_POSITION_UPDATE.toString().equals(parameters[0])
                     && PARAMETER_POSITION_UPDATE.toString().equals(parameters[1]) && parameters.length >= 3) {
                 BigDecimal level = new BigDecimal(parameters[2]);
                 logger.trace("Shade {} received position update: {}", getIntegrationId(), level);
