@@ -38,6 +38,7 @@ import org.openhab.binding.lutron.internal.net.TelnetSessionListener;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
+import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,12 +200,13 @@ public class IPBridgeHandler extends AbstractBridgeHandler {
         updateStatus(ThingStatus.ONLINE);
 
         // Disable prompts
-        sendCommand(new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.MONITORING, -1, MONITOR_PROMPT,
-                MONITOR_DISABLE));
+        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.EXECUTE, LutronCommandType.MONITORING, -1,
+                MONITOR_PROMPT, MONITOR_DISABLE));
 
         // Check the time device database was last updated. On the initial connect, this will trigger
         // a scan for paired devices.
-        sendCommand(new LutronCommand(LutronOperation.QUERY, LutronCommandType.SYSTEM, -1, SYSTEM_DBEXPORTDATETIME));
+        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, -1,
+                SYSTEM_DBEXPORTDATETIME));
 
         messageSender = new Thread(this::sendCommandsThread, "Lutron sender");
         messageSender.start();
@@ -413,7 +415,8 @@ public class IPBridgeHandler extends AbstractBridgeHandler {
         keepAliveReconnect = scheduler.schedule(this::reconnect, KEEPALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         logger.trace("Sending keepalive query");
-        sendCommand(new LutronCommand(LutronOperation.QUERY, LutronCommandType.SYSTEM, -1, SYSTEM_DBEXPORTDATETIME));
+        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, -1,
+                SYSTEM_DBEXPORTDATETIME));
     }
 
     private void setDbUpdateDate(String dateString, String timeString) {
