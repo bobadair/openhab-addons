@@ -23,6 +23,7 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
+import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * Base type for all Lutron thing handlers.
  *
  * @author Allan Tong - Initial contribution
- * @author Bob Adair - Added methods for status and state management
+ * @author Bob Adair - Added methods for status and state management. Added TargetType to LutronCommand for LEAP bridge.
  */
 @NonNullByDefault
 public abstract class LutronHandler extends BaseThingHandler {
@@ -89,39 +90,43 @@ public abstract class LutronHandler extends BaseThingHandler {
         }
     }
 
-    protected void output(Object... parameters) {
-        sendCommand(
-                new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.OUTPUT, getIntegrationId(), parameters));
-    }
-
-    protected void device(Object... parameters) {
-        sendCommand(
-                new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.DEVICE, getIntegrationId(), parameters));
-    }
-
-    protected void timeclock(Object... parameters) {
-        sendCommand(new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.TIMECLOCK, getIntegrationId(),
+    protected void output(TargetType type, Object... parameters) {
+        sendCommand(new LutronCommand(type, LutronOperation.EXECUTE, LutronCommandType.OUTPUT, getIntegrationId(),
                 parameters));
     }
 
+    protected void device(TargetType type, Object... parameters) {
+        sendCommand(new LutronCommand(type, LutronOperation.EXECUTE, LutronCommandType.DEVICE, getIntegrationId(),
+                parameters));
+    }
+
+    protected void timeclock(Object... parameters) {
+        sendCommand(new LutronCommand(TargetType.TIMECLOCK, LutronOperation.EXECUTE, LutronCommandType.TIMECLOCK,
+                getIntegrationId(), parameters));
+    }
+
     protected void greenMode(Object... parameters) {
-        sendCommand(new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.MODE, getIntegrationId(), parameters));
+        sendCommand(new LutronCommand(TargetType.GREENMODE, LutronOperation.EXECUTE, LutronCommandType.MODE,
+                getIntegrationId(), parameters));
     }
 
-    protected void queryOutput(Object... parameters) {
-        sendCommand(new LutronCommand(LutronOperation.QUERY, LutronCommandType.OUTPUT, getIntegrationId(), parameters));
+    protected void queryOutput(TargetType type, Object... parameters) {
+        sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.OUTPUT, getIntegrationId(),
+                parameters));
     }
 
-    protected void queryDevice(Object... parameters) {
-        sendCommand(new LutronCommand(LutronOperation.QUERY, LutronCommandType.DEVICE, getIntegrationId(), parameters));
+    protected void queryDevice(TargetType type, Object... parameters) {
+        sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.DEVICE, getIntegrationId(),
+                parameters));
     }
 
     protected void queryTimeclock(Object... parameters) {
-        sendCommand(
-                new LutronCommand(LutronOperation.QUERY, LutronCommandType.TIMECLOCK, getIntegrationId(), parameters));
+        sendCommand(new LutronCommand(TargetType.TIMECLOCK, LutronOperation.QUERY, LutronCommandType.TIMECLOCK,
+                getIntegrationId(), parameters));
     }
 
     protected void queryGreenMode(Object... parameters) {
-        sendCommand(new LutronCommand(LutronOperation.QUERY, LutronCommandType.MODE, getIntegrationId(), parameters));
+        sendCommand(new LutronCommand(TargetType.GREENMODE, LutronOperation.QUERY, LutronCommandType.MODE,
+                getIntegrationId(), parameters));
     }
 }
