@@ -69,7 +69,6 @@ import org.openhab.binding.lutron.internal.protocol.leap.ButtonGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.CommandType;
 import org.openhab.binding.lutron.internal.protocol.leap.CommuniqueType;
 import org.openhab.binding.lutron.internal.protocol.leap.Device;
-import org.openhab.binding.lutron.internal.protocol.leap.Href;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
 import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroupStatus;
 import org.openhab.binding.lutron.internal.protocol.leap.Request;
@@ -129,10 +128,14 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     private @Nullable ScheduledFuture<?> keepAlive;
     private @Nullable ScheduledFuture<?> keepAliveReconnect;
     private @Nullable ScheduledFuture<?> connectRetryJob;
+    private final Object keepAliveReconnectLock = new Object();
 
     private final Map<Integer, Integer> zoneToDevice = new HashMap<>();
     private final Map<Integer, Integer> deviceToZone = new HashMap<>();
-    private final Object zoneMapLock = new Object();
+    private final Object zoneMapsLock = new Object();
+
+    private @Nullable Map<Integer, List<Integer>> deviceButtonMap;
+    private final Object deviceButtonMapLock = new Object();
 
     // private @Nullable Date lastDbUpdateDate;
     private @Nullable LeapDeviceDiscoveryService discoveryService;
@@ -330,10 +333,14 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         if (keepAlive != null) {
             keepAlive.cancel(true);
         }
-        if (keepAliveReconnect != null) {
-            // May be called from keepAliveReconnect thread, so call cancel with false;
-            keepAliveReconnect.cancel(false);
+
+        synchronized (keepAliveReconnectLock) {
+            if (keepAliveReconnect != null) {
+                // May be called from keepAliveReconnect thread, so call cancel with false;
+                keepAliveReconnect.cancel(false);
+            }
         }
+
         if (senderThread != null && senderThread.isAlive()) {
             senderThread.interrupt();
         }
@@ -445,11 +452,12 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             // CommuniqueType type = CommuniqueType.valueOf(communiqueType);
 
             // Got a good message, so cancel reconnect task.
-            // TODO: add locking
-            if (keepAliveReconnect != null) {
-                logger.trace("Canceling scheduled reconnect job.");
-                keepAliveReconnect.cancel(true);
-                keepAliveReconnect = null;
+            synchronized (keepAliveReconnectLock) {
+                if (keepAliveReconnect != null) {
+                    logger.trace("Canceling scheduled reconnect job.");
+                    keepAliveReconnect.cancel(true);
+                    keepAliveReconnect = null;
+                }
             }
 
             switch (communiqueType) {
@@ -480,7 +488,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     }
 
     private void handleExceptionResponse(JsonObject message) {
-        // TODO Auto-generated method stub
+        // TODO
     }
 
     private void handleReadResponseMessage(JsonObject message) {
@@ -505,26 +513,26 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             JsonObject body = message.get("Body").getAsJsonObject();
 
             switch (messageBodyType) {
+                case "OnePingResponse":
+                    handleOnePingResponse(body);
+                    break;
                 case "OneZoneStatus":
                     handleOneZoneStatus(body);
+                    break;
+                case "MultipleAreaDefinition":
+                    break;
+                case "MultipleButtonGroupDefinition":
+                    handleMultipleButtonGroupDefinition(body);
+                    break;
+                case "MultipleDeviceDefinition":
+                    handleMultipleDeviceDefinition(body);
                     break;
                 case "MultipleOccupancyGroupDefinition":
                     break;
                 case "MultipleOccupancyGroupStatus":
                     handleMultipleOccupancyGroupStatus(body);
                     break;
-                case "MultipleDeviceDefinition":
-                    handleMultipleDeviceDefinition(body);
-                    break;
-                case "MultipleButtonGroupDefinition":
-                    handleMultipleButtonGroupDefinition(body);
-                    break;
-                case "MultipleAreaDefinition":
-                    break;
                 case "MultipleVirtualButtonDefinition":
-                    break;
-                case "OnePingResponse":
-                    handleOnePingResponse(body);
                     break;
                 default:
                     logger.debug("Unknown MessageBodyType received: {}", messageBodyType);
@@ -596,9 +604,13 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         // TODO
     }
 
+    /**
+     * Parses a MultipleDeviceDefinition message body and loads the zoneToDevice and deviceToZone maps. Also passes the
+     * device data on to the discovery service.
+     */
     private void handleMultipleDeviceDefinition(JsonObject messageBody) {
         List<Device> deviceList = parseBodyMultiple(messageBody, "Devices", Device.class);
-        synchronized (zoneMapLock) {
+        synchronized (zoneMapsLock) {
             zoneToDevice.clear();
             deviceToZone.clear();
             for (Device device : deviceList) {
@@ -615,7 +627,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         // checkMapsLoaded();
 
         if (discoveryService != null) {
-            discoveryService.processMultipleDeviceDefinition(messageBody);// TODO: change to pass object list
+            discoveryService.processMultipleDeviceDefinition(messageBody);// TODO: change to pass Device list
         }
     }
 
@@ -629,20 +641,30 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     // }
     // }
 
+    /**
+     * Parse a MultipleButtonGroupDefinition message body and load the results into deviceButtonMap.
+     */
     private void handleMultipleButtonGroupDefinition(JsonObject messageBody) {
+        Map<Integer, List<Integer>> deviceButtonMap = new HashMap<>();
+
         List<ButtonGroup> buttonGroupList = parseBodyMultiple(messageBody, "ButtonGroups", ButtonGroup.class);
         for (ButtonGroup buttonGroup : buttonGroupList) {
-            logger.trace("Found ButtonGroup: {} parent device: {}", buttonGroup.getButtonGroup(),
-                    buttonGroup.getParentDevice());
-            for (Href button : buttonGroup.buttons) {
-                logger.trace("Button: {}", button.href);
-            }
+            int parentDevice = buttonGroup.getParentDevice();
+            logger.trace("Found ButtonGroup: {} parent device: {}", buttonGroup.getButtonGroup(), parentDevice);
+            List<Integer> buttonList = buttonGroup.getButtonList();
+            deviceButtonMap.put(parentDevice, buttonList);
+        }
+        synchronized (deviceButtonMapLock) {
+            this.deviceButtonMap = deviceButtonMap;
         }
     }
 
+    /**
+     * Notify child thing handler of a zonelevel update from a received zone status message.
+     */
     private void handleZoneUpdate(ZoneStatus zoneStatus) {
         logger.trace("zone {} status level: {}", zoneStatus.getZone(), zoneStatus.level);
-        int integrationId = this.zoneToDevice(zoneStatus.getZone());
+        int integrationId = zoneToDevice(zoneStatus.getZone());
 
         // dispatch update to proper thing handler
         LutronHandler handler = findThingHandler(integrationId);
@@ -660,6 +682,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
+    /**
+     * Queue a LEAP command for transmission by the sender thread.
+     */
     public void sendCommand(LeapCommand command) {
         sendQueue.add(command);
     }
@@ -683,6 +708,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         return;
     }
 
+    /**
+     * Translates an query output LutronCommand (i.e. a LIP ?OUTPUT command) to LEAP protocol.
+     */
     private void queryOutputToLeap(LutronCommand command) {
         int action = command.getNumberParameter(0);
 
@@ -697,6 +725,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
+    /**
+     * Translates an execute output LutronCommand (i.e. a LIP !OUTPUT command) to LEAP protocol.
+     */
     private void execOutputToLeap(LutronCommand command) {
         int action = command.getNumberParameter(0);
         Integer zone = deviceToZone(command.getIntegrationId());
@@ -736,6 +767,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
+    /**
+     * Translates an execute device LutronCommand (i.e. a LIP !DEVICE command) to LEAP protocol.
+     */
     private void execDeviceToLeap(LutronCommand command) {
         int id = command.getIntegrationId();
         int component;
@@ -751,11 +785,15 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
         if (command.targetType == TargetType.KEYPAD) {
             if (action == LutronCommand.ACTION_PRESS) {
-                int button = getButton(id, component); // TODO: check for good return
-                sendCommand(new LeapCommand(Request.buttonCommand(button, CommandType.PRESSANDHOLD)));
+                int button = getButton(id, component);
+                if (button > 0) {
+                    sendCommand(new LeapCommand(Request.buttonCommand(button, CommandType.PRESSANDHOLD)));
+                }
             } else if (action == LutronCommand.ACTION_RELEASE) {
-                int button = getButton(id, component); // TODO: check for good return
-                sendCommand(new LeapCommand(Request.buttonCommand(button, CommandType.RELEASE)));
+                int button = getButton(id, component);
+                if (button > 0) {
+                    sendCommand(new LeapCommand(Request.buttonCommand(button, CommandType.RELEASE)));
+                }
             } else {
                 logger.debug("Ignoring device command. Unsupported action.");
             }
@@ -770,9 +808,25 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
+    /**
+     * Returns LEAP button number for given integrationID and component. Returns 0 if button number cannot be
+     * determined.
+     */
     int getButton(int integrationID, int component) {
-        // TODO
-        return 1;
+        synchronized (deviceButtonMapLock) {
+            if (deviceButtonMap != null) {
+                List<Integer> buttonList = deviceButtonMap.get(integrationID);
+                if (buttonList != null && component < buttonList.size()) {
+                    return buttonList.get(component - 1);
+                } else {
+                    logger.debug("Could not find button component {} for id {}", component, integrationID);
+                    return 0;
+                }
+            } else {
+                logger.debug("Device to button map not populated");
+                return 0;
+            }
+        }
     }
 
     private @Nullable LutronHandler findThingHandler(int integrationId) {
@@ -793,24 +847,24 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     }
 
     private @Nullable Integer zoneToDevice(int zone) {
-        synchronized (zoneMapLock) {
+        synchronized (zoneMapsLock) {
             return zoneToDevice.get(zone);
         }
     }
 
     private @Nullable Integer deviceToZone(int device) {
-        synchronized (zoneMapLock) {
+        synchronized (zoneMapsLock) {
             return deviceToZone.get(device);
         }
     }
 
     private void sendKeepAlive() {
-        logger.debug("Scheduling keepalive reconnect job");
-        // Reconnect if no response is received within 30 seconds.
-        keepAliveReconnect = scheduler.schedule(this::reconnect, KEEPALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
         logger.trace("Sending keepalive query");
         sendCommand(new LeapCommand(Request.ping()));
+        // Reconnect if no response is received within KEEPALIVE_TIMEOUT_SECONDS.
+        synchronized (keepAliveReconnectLock) {
+            keepAliveReconnect = scheduler.schedule(this::reconnect, KEEPALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        }
     }
 
     @Override
