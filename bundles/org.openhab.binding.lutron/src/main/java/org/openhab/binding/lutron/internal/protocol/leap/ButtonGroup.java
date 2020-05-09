@@ -12,8 +12,12 @@
  */
 package org.openhab.binding.lutron.internal.protocol.leap;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.eclipse.jdt.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -42,16 +46,20 @@ public class ButtonGroup extends AbstractBodyType {
     @SerializedName("ProgrammingType")
     public String programmingType; // Column
 
-    // @SerializedName("Zone")
-    // public Href zone = new Href();;
-
     public ButtonGroup() {
     }
 
-    // public ButtonGroup(String href) {
-    // // TODO
-    // this.href = href;
-    // }
+    public static int extractButtonNumber(@NonNull String href) {
+        Matcher matcher = BUTTON_HREF_PATTERN.matcher(href);
+        if (matcher.find()) {
+            try {
+                return Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
 
     public int getParentDevice() {
         if (parent != null && parent.href != null) {
@@ -80,5 +88,14 @@ public class ButtonGroup extends AbstractBodyType {
             }
         }
         return 0;
+    }
+
+    public List<Integer> getButtonList() {
+        LinkedList<Integer> buttonNumList = new LinkedList<>();
+        for (Href button : buttons) {
+            int buttonNum = extractButtonNumber(button.href);
+            buttonNumList.add(buttonNum);
+        }
+        return buttonNumList;
     }
 }
