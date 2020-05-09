@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.lutron.internal.handler;
 
+import static org.openhab.binding.lutron.internal.LutronBindingConstants.PROPERTY_PRODTYP;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -606,7 +608,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
     /**
      * Parses a MultipleDeviceDefinition message body and loads the zoneToDevice and deviceToZone maps. Also passes the
-     * device data on to the discovery service.
+     * device data on to the discovery service and calls setBridgeProperties() with the hub's device entry.
      */
     private void handleMultipleDeviceDefinition(JsonObject messageBody) {
         List<Device> deviceList = parseBodyMultiple(messageBody, "Devices", Device.class);
@@ -620,6 +622,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 if (zoneid > 0 && deviceid > 0) {
                     zoneToDevice.put(zoneid, deviceid);
                     deviceToZone.put(deviceid, zoneid);
+                }
+                if (deviceid == 1) { // ID 1 is the bridge
+                    setBridgeProperties(device);
                 }
             }
         }
@@ -640,6 +645,29 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     // }
     // }
     // }
+
+    /**
+     * Set informational bridge properties from the Device entry for the hub/repeater
+     */
+    private void setBridgeProperties(Device device) {
+        if (device.getDevice() == 1 && device.repeaterProperties != null) {
+            Map<String, String> properties = editProperties();
+            if (device.name != null) {
+                properties.put(PROPERTY_PRODTYP, device.name);
+            }
+            if (device.modelNumber != null) {
+                properties.put(Thing.PROPERTY_MODEL_ID, device.modelNumber);
+            }
+            if (device.serialNumber != null) {
+                properties.put(Thing.PROPERTY_SERIAL_NUMBER, device.serialNumber);
+            }
+            if (device.firmwareImage != null && device.firmwareImage.firmware != null
+                    && device.firmwareImage.firmware.displayName != null) {
+                properties.put(Thing.PROPERTY_FIRMWARE_VERSION, device.firmwareImage.firmware.displayName);
+            }
+            updateProperties(properties);
+        }
+    }
 
     /**
      * Parse a MultipleButtonGroupDefinition message body and load the results into deviceButtonMap.
