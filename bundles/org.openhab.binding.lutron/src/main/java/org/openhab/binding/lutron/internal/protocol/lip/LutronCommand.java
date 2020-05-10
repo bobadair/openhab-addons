@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.lutron.internal.protocol.lip;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 /**
  * Command to a Lutron integration access point.
  *
@@ -67,13 +69,15 @@ public class LutronCommand {
     private final LutronCommandType type;
     private final int integrationId;
     public final Object[] parameters;
+    private final Integer leapComponent;
 
     public LutronCommand(TargetType targetType, LutronOperation operation, LutronCommandType type, int integrationId,
-            Object... parameters) {
+            Integer leapComponent, Object... parameters) {
         this.targetType = targetType;
         this.operation = operation;
         this.type = type;
         this.integrationId = integrationId;
+        this.leapComponent = leapComponent;
         this.parameters = parameters;
     }
 
@@ -91,6 +95,10 @@ public class LutronCommand {
 
     public Object[] getParameters() {
         return this.parameters;
+    }
+
+    public @Nullable Integer getLeapComponent() {
+        return this.leapComponent;
     }
 
     public int getNumberParameter(int position) {
