@@ -57,7 +57,7 @@ public enum CommuniqueType {
     @SerializedName("ExceptionResponse")
     EXCEPTIONRESPONSE("ExceptionResponse");
 
-    private transient final String string;
+    private final transient String string;
 
     CommuniqueType(String string) {
         this.string = string;
