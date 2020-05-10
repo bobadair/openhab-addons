@@ -92,23 +92,28 @@ public abstract class LutronHandler extends BaseThingHandler {
     }
 
     protected void output(TargetType type, Object... parameters) {
-        sendCommand(new LutronCommand(type, LutronOperation.EXECUTE, LutronCommandType.OUTPUT, getIntegrationId(),
+        sendCommand(new LutronCommand(type, LutronOperation.EXECUTE, LutronCommandType.OUTPUT, getIntegrationId(), null,
                 parameters));
     }
 
-    protected void device(TargetType type, Object... parameters) {
+    protected void device(TargetType type, @Nullable Integer leapComponent, Object... parameters) {
         sendCommand(new LutronCommand(type, LutronOperation.EXECUTE, LutronCommandType.DEVICE, getIntegrationId(),
+                leapComponent, parameters));
+    }
+
+    protected void device(TargetType type, Object... parameters) {
+        sendCommand(new LutronCommand(type, LutronOperation.EXECUTE, LutronCommandType.DEVICE, getIntegrationId(), null,
                 parameters));
     }
 
     protected void timeclock(Object... parameters) {
         sendCommand(new LutronCommand(TargetType.TIMECLOCK, LutronOperation.EXECUTE, LutronCommandType.TIMECLOCK,
-                getIntegrationId(), parameters));
+                getIntegrationId(), null, parameters));
     }
 
     protected void greenMode(Object... parameters) {
         sendCommand(new LutronCommand(TargetType.GREENMODE, LutronOperation.EXECUTE, LutronCommandType.MODE,
-                getIntegrationId(), parameters));
+                getIntegrationId(), null, parameters));
     }
 
     protected void sysvar(Object... parameters) {
@@ -122,23 +127,23 @@ public abstract class LutronHandler extends BaseThingHandler {
     }
 
     protected void queryOutput(TargetType type, Object... parameters) {
-        sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.OUTPUT, getIntegrationId(),
+        sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.OUTPUT, getIntegrationId(), null,
                 parameters));
     }
 
     protected void queryDevice(TargetType type, Object... parameters) {
-        sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.DEVICE, getIntegrationId(),
+        sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.DEVICE, getIntegrationId(), null,
                 parameters));
     }
 
     protected void queryTimeclock(Object... parameters) {
         sendCommand(new LutronCommand(TargetType.TIMECLOCK, LutronOperation.QUERY, LutronCommandType.TIMECLOCK,
-                getIntegrationId(), parameters));
+                getIntegrationId(), null, parameters));
     }
 
     protected void queryGreenMode(Object... parameters) {
         sendCommand(new LutronCommand(TargetType.GREENMODE, LutronOperation.QUERY, LutronCommandType.MODE,
-                getIntegrationId(), parameters));
+                getIntegrationId(), null, parameters));
     }
 
     protected void querySysvar(Object... parameters) {

@@ -46,7 +46,7 @@ public enum CommandType {
     @SerializedName("Stop")
     STOP("Stop");
 
-    private transient final String string;
+    private final transient String string;
 
     CommandType(String string) {
         this.string = string;
