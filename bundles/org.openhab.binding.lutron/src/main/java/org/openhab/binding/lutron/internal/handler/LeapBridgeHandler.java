@@ -812,13 +812,21 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
 
         if (command.targetType == TargetType.KEYPAD) {
+            int leapComponent;
+            if (command.getLeapComponent() != null) {
+                leapComponent = command.getLeapComponent();
+            } else {
+                logger.debug("Ignoring device command. No leap component in command.");
+                return;
+            }
+
             if (action == LutronCommand.ACTION_PRESS) {
-                int button = getButton(id, component);
+                int button = getButton(id, leapComponent);
                 if (button > 0) {
                     sendCommand(new LeapCommand(Request.buttonCommand(button, CommandType.PRESSANDHOLD)));
                 }
             } else if (action == LutronCommand.ACTION_RELEASE) {
-                int button = getButton(id, component);
+                int button = getButton(id, leapComponent);
                 if (button > 0) {
                     sendCommand(new LeapCommand(Request.buttonCommand(button, CommandType.RELEASE)));
                 }
@@ -844,7 +852,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         synchronized (deviceButtonMapLock) {
             if (deviceButtonMap != null) {
                 List<Integer> buttonList = deviceButtonMap.get(integrationID);
-                if (buttonList != null && component < buttonList.size()) {
+                if (buttonList != null && component <= buttonList.size()) {
                     return buttonList.get(component - 1);
                 } else {
                     logger.debug("Could not find button component {} for id {}", component, integrationID);
