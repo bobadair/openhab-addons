@@ -54,6 +54,8 @@ public abstract class BaseKeypadHandler extends LutronHandler {
     protected List<KeypadComponent> ledList = new ArrayList<>();
     protected List<KeypadComponent> cciList = new ArrayList<>();
 
+    Map<Integer, Integer> leapButtonMap;
+
     protected int integrationId;
     protected String model;
     protected Boolean autoRelease;
@@ -299,13 +301,15 @@ public abstract class BaseKeypadHandler extends LutronHandler {
         // For buttons, handle OnOffType commands
         if (isButton(componentID)) {
             if (command instanceof OnOffType) {
+                // Annotate commands with LEAP button number for LEAP bridge
+                Integer leapComponent = (this.leapButtonMap == null) ? null : leapButtonMap.get(componentID);
                 if (command == OnOffType.ON) {
-                    device(commandTargetType, componentID, LutronCommand.ACTION_PRESS);
+                    device(commandTargetType, leapComponent, componentID, LutronCommand.ACTION_PRESS);
                     if (autoRelease) {
-                        device(commandTargetType, componentID, LutronCommand.ACTION_RELEASE);
+                        device(commandTargetType, leapComponent, componentID, LutronCommand.ACTION_RELEASE);
                     }
                 } else if (command == OnOffType.OFF) {
-                    device(commandTargetType, componentID, LutronCommand.ACTION_RELEASE);
+                    device(commandTargetType, leapComponent, componentID, LutronCommand.ACTION_RELEASE);
                 }
             } else {
                 logger.warn("Invalid command type {} received for channel {} device {}", command, channelUID,
