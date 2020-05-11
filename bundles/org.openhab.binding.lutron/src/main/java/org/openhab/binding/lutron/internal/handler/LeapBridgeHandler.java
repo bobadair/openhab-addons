@@ -12,7 +12,7 @@
  */
 package org.openhab.binding.lutron.internal.handler;
 
-import static org.openhab.binding.lutron.internal.LutronBindingConstants.PROPERTY_PRODTYP;
+import static org.openhab.binding.lutron.internal.LutronBindingConstants.*;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -58,6 +58,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -920,7 +921,11 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        // Accepts no commands
+        if (channelUID.getId().equals(CHANNEL_COMMAND)) {
+            if (command instanceof StringType) {
+                sendCommand(new LeapCommand(command.toString()));
+            }
+        }
     }
 
     @Override
