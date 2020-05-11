@@ -58,6 +58,11 @@
 	<bridge-type id="leapbridge">
 		<label>Lutron LEAP Access Point</label>
 		<description>LEAP access point to Lutron lighting control system</description>
+
+		<channels>
+			<channel id="command" typeId="command-type"/>
+		</channels>
+
 		<properties>
 			<property name="vendor">Lutron</property>
 		</properties>
@@ -125,6 +130,12 @@
 			</parameter>
 		</config-description>
 	</bridge-type>
+
+	<channel-type id="command-type" advanced="true">
+		<item-type>Text</item-type>
+		<label>LEAP Command</label>
+		<description>LEAP command to send (for debugging)</description>
+	</channel-type>
 
 	<thing-type id="dimmer">
 		<supported-bridge-type-refs>
