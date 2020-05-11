@@ -71,6 +71,7 @@ import org.openhab.binding.lutron.internal.protocol.leap.ButtonGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.CommandType;
 import org.openhab.binding.lutron.internal.protocol.leap.CommuniqueType;
 import org.openhab.binding.lutron.internal.protocol.leap.Device;
+import org.openhab.binding.lutron.internal.protocol.leap.FanSpeedType;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
 import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroupStatus;
 import org.openhab.binding.lutron.internal.protocol.leap.Request;
@@ -782,13 +783,27 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 sendCommand(new LeapCommand(Request.goToLevel(zoneInt, value)));
             } else if (action == LutronCommand.ACTION_STARTRAISING) {
                 sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.RAISE)));
+                // TODO: Set channel to 100%
             } else if (action == LutronCommand.ACTION_STARTLOWERING) {
                 sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.LOWER)));
+                // TODO: Set channel to 0%
             } else if (action == LutronCommand.ACTION_STOP) {
                 sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.STOP)));
             } else {
                 logger.debug("Dropping unsupported shade action: {}", command);
                 return;
+            }
+        } else if (command.targetType == TargetType.FAN) {
+            if (action == LutronCommand.ACTION_ZONELEVEL) {
+                int value = command.getNumberParameter(1);
+                if (value > 0) {
+                    sendCommand(new LeapCommand(Request.goToFanSpeed(zoneInt, FanSpeedType.HIGH)));
+                } else {
+                    sendCommand(new LeapCommand(Request.goToFanSpeed(zoneInt, FanSpeedType.OFF)));
+                }
+                // TODO: Add in other fan speeds
+            } else {
+                logger.debug("Dropping unsupported fan action: {}", command);
             }
         } else {
             logger.debug("Dropping command for unsupported output: {}", command);
