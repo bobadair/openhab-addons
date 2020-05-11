@@ -29,11 +29,12 @@ public class Request {
         return String.format(request, zone, value);
     }
 
-    public static String goToFanSpeed(int zone, int value) {
+    public static String goToFanSpeed(int zone, FanSpeedType fanSpeed) {
         String request = "{\"CommuniqueType\": \"CreateRequest\","
                 + "\"Header\": {\"Url\": \"/zone/%d/commandprocessor\"}," + "\"Body\": {"
-                + "\"Command\": {\"CommandType\": \"GoToFanSpeed\"," + "\"FanSpeedParameters\": {\"FanSpeed\": %d}}}}";
-        return String.format(request, zone, value);
+                + "\"Command\": {\"CommandType\": \"GoToFanSpeed\","
+                + "\"FanSpeedParameters\": {\"FanSpeed\": \"%s\"}}}}";
+        return String.format(request, zone, fanSpeed.toString());
     }
 
     public static String buttonCommand(int button, CommandType command) {
