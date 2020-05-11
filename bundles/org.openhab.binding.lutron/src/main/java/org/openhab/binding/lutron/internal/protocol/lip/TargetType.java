@@ -22,6 +22,7 @@ public enum TargetType {
     BRIDGE,
     CCO,
     DIMMER,
+    FAN,
     GREENMODE,
     KEYPAD,
     SHADE,
