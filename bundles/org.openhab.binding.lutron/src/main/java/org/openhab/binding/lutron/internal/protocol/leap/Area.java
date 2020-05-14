@@ -15,9 +15,11 @@ package org.openhab.binding.lutron.internal.protocol.leap;
 import com.google.gson.annotations.SerializedName;
 
 /**
+ * LEAP Area object
+ *
  * @author Bob Adair - Initial contribution
  */
-public class Area {
+public class Area extends AbstractBodyType {
     @SerializedName("href")
     public String href;
 
