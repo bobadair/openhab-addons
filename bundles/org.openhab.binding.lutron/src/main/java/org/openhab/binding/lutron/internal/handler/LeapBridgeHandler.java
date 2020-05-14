@@ -155,10 +155,8 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         gson = new GsonBuilder()
                 // .registerTypeAdapter(Id.class, new IdTypeAdapter())
                 // .enableComplexMapKeySerialization()
-                // .serializeNulls()
                 // .setDateFormat(DateFormat.LONG)
                 // .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
-                // .setPrettyPrinting()
                 .create();
     }
 
@@ -280,10 +278,11 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             // Open SSL connection to bridge
             try {
                 logger.debug("Opening SSL connection to {}:{}", config.ipAddress, config.port);
-                sslsocket = (SSLSocket) sslsocketfactory.createSocket(config.ipAddress, config.port);
+                SSLSocket sslsocket = (SSLSocket) sslsocketfactory.createSocket(config.ipAddress, config.port);
                 sslsocket.startHandshake();
                 writer = new BufferedWriter(new OutputStreamWriter(sslsocket.getOutputStream()));
                 reader = new BufferedReader(new InputStreamReader(sslsocket.getInputStream()));
+                this.sslsocket = sslsocket;
             } catch (UnknownHostException e) {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Unknown host");
                 return;
@@ -302,23 +301,21 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
         updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, STATUS_INITIALIZING);
 
-        readerThread = new Thread(this::readerThreadJob, "Lutron reader");
+        Thread readerThread = new Thread(this::readerThreadJob, "Lutron reader");
         readerThread.setDaemon(true);
         readerThread.start();
+        this.readerThread = readerThread;
 
-        senderThread = new Thread(this::senderThreadJob, "Lutron sender");
+        Thread senderThread = new Thread(this::senderThreadJob, "Lutron sender");
         senderThread.setDaemon(true);
         senderThread.start();
+        this.senderThread = senderThread;
 
         sendCommand(new LeapCommand(Request.getDevices()));
         sendCommand(new LeapCommand(Request.getButtonGroups()));
         sendCommand(new LeapCommand(Request.getAreas()));
         sendCommand(new LeapCommand(Request.getOccupancyGroups()));
         sendCommand(new LeapCommand(Request.subscribeOccupancyGroupStatus()));
-
-        // Add these test queries temporarily (TODO: Remove)
-        // sendCommand(new LeapCommand(Request.request(CommuniqueType.READREQUEST, "/timeclock")));
-        // sendCommand(new LeapCommand(Request.request(CommuniqueType.READREQUEST, "/timeclockevent")));
 
         logger.debug("Starting keepAlive job with interval {}", heartbeatInterval);
         keepAlive = scheduler.scheduleWithFixedDelay(this::sendKeepAlive, heartbeatInterval, heartbeatInterval,
@@ -340,12 +337,8 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             keepAlive.cancel(true);
         }
 
-        synchronized (keepAliveReconnectLock) {
-            if (keepAliveReconnect != null) {
-                // May be called from keepAliveReconnect thread, so call cancel with false;
-                keepAliveReconnect.cancel(false);
-            }
-        }
+        // May be called from keepAliveReconnect thread, so call cancel with false
+        reconnectTaskCancel(false);
 
         if (senderThread != null && senderThread.isAlive()) {
             senderThread.interrupt();
@@ -464,18 +457,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             }
 
             String communiqueType = message.get("CommuniqueType").getAsString();
-            logger.debug("Received CommuniqueType: {}", communiqueType);
-
             // CommuniqueType type = CommuniqueType.valueOf(communiqueType);
-
-            // Got a good message, so cancel reconnect task.
-            synchronized (keepAliveReconnectLock) {
-                if (keepAliveReconnect != null) {
-                    logger.trace("Canceling scheduled reconnect job.");
-                    keepAliveReconnect.cancel(true);
-                    keepAliveReconnect = null;
-                }
-            }
+            logger.debug("Received CommuniqueType: {}", communiqueType);
+            reconnectTaskCancel(true); // Got a message, so cancel reconnect task.
 
             switch (communiqueType) {
                 case "CreateResponse":
@@ -974,8 +958,22 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         logger.trace("Sending keepalive query");
         sendCommand(new LeapCommand(Request.ping()));
         // Reconnect if no response is received within KEEPALIVE_TIMEOUT_SECONDS.
+        reconnectTaskSchedule();
+    }
+
+    private void reconnectTaskSchedule() {
         synchronized (keepAliveReconnectLock) {
             keepAliveReconnect = scheduler.schedule(this::reconnect, KEEPALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        }
+    }
+
+    private void reconnectTaskCancel(boolean interrupt) {
+        synchronized (keepAliveReconnectLock) {
+            if (keepAliveReconnect != null) {
+                logger.trace("Canceling scheduled reconnect job.");
+                keepAliveReconnect.cancel(interrupt);
+                keepAliveReconnect = null;
+            }
         }
     }
 
