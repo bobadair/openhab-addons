@@ -64,16 +64,18 @@ import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
+import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.lutron.internal.config.LeapBridgeConfig;
 import org.openhab.binding.lutron.internal.discovery.LeapDeviceDiscoveryService;
 import org.openhab.binding.lutron.internal.protocol.leap.AbstractBodyType;
+import org.openhab.binding.lutron.internal.protocol.leap.Area;
 import org.openhab.binding.lutron.internal.protocol.leap.ButtonGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.CommandType;
-import org.openhab.binding.lutron.internal.protocol.leap.CommuniqueType;
 import org.openhab.binding.lutron.internal.protocol.leap.Device;
 import org.openhab.binding.lutron.internal.protocol.leap.FanSpeedType;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
+import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroupStatus;
 import org.openhab.binding.lutron.internal.protocol.leap.Request;
 import org.openhab.binding.lutron.internal.protocol.leap.ZoneStatus;
@@ -298,6 +300,8 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             }
         }
 
+        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, STATUS_INITIALIZING);
+
         readerThread = new Thread(this::readerThreadJob, "Lutron reader");
         readerThread.setDaemon(true);
         readerThread.start();
@@ -308,15 +312,13 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
         sendCommand(new LeapCommand(Request.getDevices()));
         sendCommand(new LeapCommand(Request.getButtonGroups()));
+        sendCommand(new LeapCommand(Request.getAreas()));
+        sendCommand(new LeapCommand(Request.getOccupancyGroups()));
         sendCommand(new LeapCommand(Request.subscribeOccupancyGroupStatus()));
 
         // Add these test queries temporarily (TODO: Remove)
-        sendCommand(new LeapCommand(Request.getAreas()));
-        sendCommand(new LeapCommand(Request.getOccupancyGroups()));
-        sendCommand(new LeapCommand(Request.request(CommuniqueType.READREQUEST, "/timeclock")));
-        sendCommand(new LeapCommand(Request.request(CommuniqueType.READREQUEST, "/timeclockevent")));
-
-        // Delay updating status to online until device/zone info received
+        // sendCommand(new LeapCommand(Request.request(CommuniqueType.READREQUEST, "/timeclock")));
+        // sendCommand(new LeapCommand(Request.request(CommuniqueType.READREQUEST, "/timeclockevent")));
 
         logger.debug("Starting keepAlive job with interval {}", heartbeatInterval);
         keepAlive = scheduler.scheduleWithFixedDelay(this::sendKeepAlive, heartbeatInterval, heartbeatInterval,
@@ -382,6 +384,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         connect();
     }
 
+    /**
+     * Method executed by the message sender thread (senderThread)
+     */
     private void senderThreadJob() {
         logger.debug("Command sender thread started");
         try {
@@ -413,6 +418,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
+    /**
+     * Method executed by the message reader thread (readerThread)
+     */
     private void readerThreadJob() {
         logger.debug("Message reader thread started");
         String msg = null;
@@ -436,6 +444,11 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
+    /**
+     * Method called by the message reader thread to handle all received LEAP messages.
+     *
+     * @param msg LEAP message
+     */
     private void handleMessage(String msg) {
         if (msg.trim().equals("")) {
             return; // Ignore empty lines
@@ -491,10 +504,20 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
+    /**
+     * Method called by handleMessage() to handle all LEAP ExceptionResponse messages.
+     *
+     * @param message LEAP message
+     */
     private void handleExceptionResponse(JsonObject message) {
         // TODO
     }
 
+    /**
+     * Method called by handleMessage() to handle all LEAP ReadResponse and SubscribeResponse messages.
+     *
+     * @param message LEAP message
+     */
     private void handleReadResponseMessage(JsonObject message) {
         try {
             JsonObject header = message.get("Header").getAsJsonObject();
@@ -524,6 +547,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                     handleOneZoneStatus(body);
                     break;
                 case "MultipleAreaDefinition":
+                    handleMultipleAreaDefinition(body);
                     break;
                 case "MultipleButtonGroupDefinition":
                     handleMultipleButtonGroupDefinition(body);
@@ -532,6 +556,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                     handleMultipleDeviceDefinition(body);
                     break;
                 case "MultipleOccupancyGroupDefinition":
+                    handleMultipleOccupancyGroupDefinition(body);
                     break;
                 case "MultipleOccupancyGroupStatus":
                     handleMultipleOccupancyGroupStatus(body);
@@ -588,15 +613,13 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
-    private void handleMultipleOccupancyGroupStatus(JsonObject messageBody) {
-        List<OccupancyGroupStatus> statusList = parseBodyMultiple(messageBody, "OccupancyGroupStatuses",
-                OccupancyGroupStatus.class);
-        for (OccupancyGroupStatus status : statusList) {
-            logger.debug("OccupancyGroup: {} Status: {}", status.occupancyGroup.href, status.occupancyStatus);
-            // TODO: Dispatch OccupancyGroup status updates
-        }
+    private void handleOnePingResponse(JsonObject messageBody) {
+        logger.debug("Ping response received");
     }
 
+    /**
+     * Parses a OneZoneStatus message body. Calls handleZoneUpdate() to dispatch zone updates.
+     */
     private void handleOneZoneStatus(JsonObject messageBody) {
         ZoneStatus zoneStatus = parseBodySingle(messageBody, "ZoneStatus", ZoneStatus.class);
         if (zoneStatus != null) {
@@ -604,8 +627,41 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
-    private void handleOnePingResponse(JsonObject messageBody) {
-        // TODO
+    /**
+     * Parses a MultipleAreaDefinition message body.
+     */
+    private void handleMultipleAreaDefinition(JsonObject messageBody) {
+        logger.trace("Parsing area list");
+        List<Area> areaList = parseBodyMultiple(messageBody, "Areas", Area.class);
+        for (Area area : areaList) {
+            logger.debug("Area name: {} href: {}", area.name, area.href);
+            // TODO: Record area info
+        }
+    }
+
+    /**
+     * Parses a MultipleOccupancyGroupDefinition message body.
+     */
+    private void handleMultipleOccupancyGroupDefinition(JsonObject messageBody) {
+        logger.trace("Parsing occupancy group list");
+        List<OccupancyGroup> occuGroupList = parseBodyMultiple(messageBody, "OccupancyGroups", OccupancyGroup.class);
+        for (OccupancyGroup occuGroup : occuGroupList) {
+            logger.debug("OccupancyGroup: {}", occuGroup.href);
+            // TODO: Record occupancy group info
+        }
+    }
+
+    /**
+     * Parses a MultipleOccupancyGroupStatus message body and updates occupancy status.
+     */
+    private void handleMultipleOccupancyGroupStatus(JsonObject messageBody) {
+        logger.trace("Parsing occupancy group status list");
+        List<OccupancyGroupStatus> statusList = parseBodyMultiple(messageBody, "OccupancyGroupStatuses",
+                OccupancyGroupStatus.class);
+        for (OccupancyGroupStatus status : statusList) {
+            logger.debug("OccupancyGroup: {} Status: {}", status.occupancyGroup.href, status.occupancyStatus);
+            // TODO: Dispatch OccupancyGroup status updates
+        }
     }
 
     /**
@@ -621,6 +677,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 Integer zoneid = device.getZone();
                 Integer deviceid = device.getDevice();
                 logger.debug("Found device: {} id: {} zone: {}", device.name, deviceid, zoneid);
+                // TODO: Maintain device type info
                 if (zoneid > 0 && deviceid > 0) {
                     zoneToDevice.put(zoneid, deviceid);
                     deviceToZone.put(deviceid, zoneid);
@@ -630,44 +687,24 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 }
             }
         }
-        updateStatus(ThingStatus.ONLINE); // TODO: Move this
-        // checkMapsLoaded();
+        checkInitialized();// TODO: Move this?
 
         if (discoveryService != null) {
             discoveryService.processMultipleDeviceDefinition(messageBody);// TODO: change to pass Device list
         }
     }
 
-    // TODO
-    // private void checkMapsLoaded() {
-    // ThingStatusInfo statusInfo = getThing().getStatusInfo();
-    // if (statusInfo.getStatus() == ThingStatus.OFFLINE && STATUS_INITIALIZING.equals(statusInfo.getDescription())) {
-    // if (devicesLoaded && areasLoaded && zonesLoaded) {
-    // updateStatus(ThingStatus.ONLINE);
-    // }
-    // }
-    // }
-
     /**
-     * Set informational bridge properties from the Device entry for the hub/repeater
+     * Set state to online if offline/initializing and all initialization info is loaded.
      */
-    private void setBridgeProperties(Device device) {
-        if (device.getDevice() == 1 && device.repeaterProperties != null) {
-            Map<String, String> properties = editProperties();
-            if (device.name != null) {
-                properties.put(PROPERTY_PRODTYP, device.name);
-            }
-            if (device.modelNumber != null) {
-                properties.put(Thing.PROPERTY_MODEL_ID, device.modelNumber);
-            }
-            if (device.serialNumber != null) {
-                properties.put(Thing.PROPERTY_SERIAL_NUMBER, device.serialNumber);
-            }
-            if (device.firmwareImage != null && device.firmwareImage.firmware != null
-                    && device.firmwareImage.firmware.displayName != null) {
-                properties.put(Thing.PROPERTY_FIRMWARE_VERSION, device.firmwareImage.firmware.displayName);
-            }
-            updateProperties(properties);
+    private void checkInitialized() {
+        ThingStatusInfo statusInfo = getThing().getStatusInfo();
+        if (statusInfo.getStatus() == ThingStatus.OFFLINE && STATUS_INITIALIZING.equals(statusInfo.getDescription())) {
+            // if (devicesLoaded && areasLoaded && zonesLoaded) {
+            // updateStatus(ThingStatus.ONLINE);
+            //
+            // }
+            updateStatus(ThingStatus.ONLINE); // TODO: Remove
         }
     }
 
@@ -709,6 +746,29 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             }
         } else {
             logger.debug("No thing configured for integration ID {}", integrationId);
+        }
+    }
+
+    /**
+     * Set informational bridge properties from the Device entry for the hub/repeater
+     */
+    private void setBridgeProperties(Device device) {
+        if (device.getDevice() == 1 && device.repeaterProperties != null) {
+            Map<String, String> properties = editProperties();
+            if (device.name != null) {
+                properties.put(PROPERTY_PRODTYP, device.name);
+            }
+            if (device.modelNumber != null) {
+                properties.put(Thing.PROPERTY_MODEL_ID, device.modelNumber);
+            }
+            if (device.serialNumber != null) {
+                properties.put(Thing.PROPERTY_SERIAL_NUMBER, device.serialNumber);
+            }
+            if (device.firmwareImage != null && device.firmwareImage.firmware != null
+                    && device.firmwareImage.firmware.displayName != null) {
+                properties.put(Thing.PROPERTY_FIRMWARE_VERSION, device.firmwareImage.firmware.displayName);
+            }
+            updateProperties(properties);
         }
     }
 
@@ -756,7 +816,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     }
 
     /**
-     * Translates an execute output LutronCommand (i.e. a LIP !OUTPUT command) to LEAP protocol.
+     * Translates an execute output LutronCommand (i.e. a LIP #OUTPUT command) to LEAP protocol.
      */
     private void execOutputToLeap(LutronCommand command) {
         int action = command.getNumberParameter(0);
@@ -812,7 +872,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     }
 
     /**
-     * Translates an execute device LutronCommand (i.e. a LIP !DEVICE command) to LEAP protocol.
+     * Translates an execute device LutronCommand (i.e. a LIP #DEVICE command) to LEAP protocol.
      */
     private void execDeviceToLeap(LutronCommand command) {
         int id = command.getIntegrationId();
