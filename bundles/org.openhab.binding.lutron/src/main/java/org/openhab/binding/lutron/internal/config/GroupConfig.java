@@ -10,24 +10,16 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.lutron.internal.protocol.lip;
+package org.openhab.binding.lutron.internal.config;
+
+import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * Target device type enum. Used to annotate LutronCommand objects so the LEAP bridge can translate them.
+ * Configuration settings for a {@link org.openhab.binding.lutron.internal.handler.GroupHandler}.
  *
  * @author Bob Adair - Initial contribution
  */
-public enum TargetType {
-    BLIND,
-    BRIDGE,
-    CCO,
-    DIMMER,
-    FAN,
-    GREENMODE,
-    GROUP,
-    KEYPAD,
-    SHADE,
-    SWITCH,
-    TIMECLOCK,
-    VIRTUALKEYPAD;
+@NonNullByDefault
+public class GroupConfig {
+    public int integrationId;
 }
