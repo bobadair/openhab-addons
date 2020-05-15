@@ -339,6 +339,27 @@
 		</config-description>
 	</thing-type>
 
+	<thing-type id="group">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="ipbridge"/>
+			<bridge-type-ref id="leapbridge"/>
+		</supported-bridge-type-refs>
+
+		<label>Occupancy Group</label>
+		<description>Shows state of occupancy sensor group</description>
+
+		<channels>
+			<channel id="groupstate" typeId="groupState"/>
+		</channels>
+
+		<config-description>
+			<parameter name="integrationId" type="integer" required="true">
+				<label>Integration ID</label>
+				<description>Occupancy group number</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+
 	<thing-type id="keypad">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="ipbridge"/>
@@ -1182,6 +1203,19 @@
 		<description>Occupancy status</description>
 		<category>Motion</category>
 		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="groupState">
+		<item-type>Text</item-type>
+		<label>Occupancy State</label>
+		<category>Motion</category>
+		<state readOnly="true">
+			<options>
+				<option value="OCCUPIED">Occupied</option>
+				<option value="UNOCCUPIED">Unoccupied</option>
+				<option value="UNKNOWN">Unknown</option>
+			</options>
+		</state>
 	</channel-type>
 
 	<channel-type id="button">
