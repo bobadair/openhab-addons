@@ -207,7 +207,7 @@ public class IPBridgeHandler extends AbstractBridgeHandler {
 
         // Disable prompts
         sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.EXECUTE, LutronCommandType.MONITORING, -1,
-                MONITOR_PROMPT, MONITOR_DISABLE));
+                null, MONITOR_PROMPT, MONITOR_DISABLE));
 
         if (requireSysvarMonitoring.get()) {
             setSysvarMonitoring(true);
@@ -215,7 +215,7 @@ public class IPBridgeHandler extends AbstractBridgeHandler {
 
         // Check the time device database was last updated. On the initial connect, this will trigger
         // a scan for paired devices.
-        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, -1,
+        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, -1, null,
                 SYSTEM_DBEXPORTDATETIME));
 
         messageSender = new Thread(this::sendCommandsThread, "Lutron sender");
@@ -425,7 +425,7 @@ public class IPBridgeHandler extends AbstractBridgeHandler {
         keepAliveReconnect = scheduler.schedule(this::reconnect, KEEPALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         logger.trace("Sending keepalive query");
-        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, -1,
+        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, -1, null,
                 SYSTEM_DBEXPORTDATETIME));
     }
 
