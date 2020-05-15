@@ -240,9 +240,9 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
 
         for (DeviceNode deviceNode : area.getDeviceNodes()) {
             if (deviceNode instanceof DeviceGroup) {
-                processDeviceGroup((DeviceGroup) deviceNode, context);
+                processDeviceGroup(area, (DeviceGroup) deviceNode, context);
             } else if (deviceNode instanceof Device) {
-                processDevice((Device) deviceNode, context);
+                processDevice(area, (Device) deviceNode, context);
             }
         }
 
@@ -257,17 +257,17 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
         context.pop();
     }
 
-    private void processDeviceGroup(DeviceGroup deviceGroup, Stack<String> context) {
+    private void processDeviceGroup(Area area, DeviceGroup deviceGroup, Stack<String> context) {
         context.push(deviceGroup.getName());
 
         for (Device device : deviceGroup.getDevices()) {
-            processDevice(device, context);
+            processDevice(area, device, context);
         }
 
         context.pop();
     }
 
-    private void processDevice(Device device, Stack<String> context) {
+    private void processDevice(Area area, Device device, Stack<String> context) {
         List<Integer> buttons;
         KeypadConfig kpConfig;
         String kpModel;
@@ -280,6 +280,7 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
             switch (type) {
                 case MOTION_SENSOR:
                     notifyDiscovery(THING_TYPE_OCCUPANCYSENSOR, device.getIntegrationId(), label);
+                    notifyDiscovery(THING_TYPE_GROUP, area.getIntegrationId(), area.getName());
                     break;
 
                 case SEETOUCH_KEYPAD:

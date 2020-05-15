@@ -53,6 +53,12 @@ public class LutronCommand {
     public static final String OCCUPIED_STATE_COMPONENT = "2";
     public static final String STATE_OCCUPIED = "3";
     public static final String STATE_UNOCCUPIED = "4";
+    // occupancy group
+    public static final Integer ACTION_GROUPSTATE = 3;
+    // TODO: combine with above occupancy states
+    public static final Integer STATE_GRP_OCCUPIED = 3;
+    public static final Integer STATE_GRP_UNOCCUPIED = 4;
+    public static final Integer STATE_GRP_UNKNOWN = 255;
     // timeclock
     public static final Integer ACTION_CLOCKMODE = 1;
     public static final Integer ACTION_SUNRISE = 2;

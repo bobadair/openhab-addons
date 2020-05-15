@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
  */
 public class IPBridgeHandler extends AbstractBridgeHandler {
     private static final Pattern RESPONSE_REGEX = Pattern
-            .compile("~(OUTPUT|DEVICE|SYSTEM|TIMECLOCK|MODE|SYSVAR),([0-9\\.:/]+),([0-9,\\.:/]*)\\Z");
+            .compile("~(OUTPUT|DEVICE|SYSTEM|TIMECLOCK|MODE|SYSVAR|GROUP),([0-9\\.:/]+),([0-9,\\.:/]*)\\Z");
 
     private static final String DB_UPDATE_DATE_FORMAT = "MM/dd/yyyy HH:mm:ss";
 

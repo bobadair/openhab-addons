@@ -154,4 +154,9 @@ public abstract class LutronHandler extends BaseThingHandler {
         sendCommand(
                 new LutronCommand(LutronOperation.QUERY, LutronCommandType.SHADEGRP, getIntegrationId(), parameters));
     }
+
+    protected void queryGroup(Object... parameters) {
+        sendCommand(new LutronCommand(TargetType.GROUP, LutronOperation.QUERY, LutronCommandType.GROUP,
+                getIntegrationId(), null, parameters));
+    }
 }
