@@ -19,7 +19,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * @author Bob Adair - Initial contribution
  */
-public class OccupancyGroup extends AbstractBodyType {
+public class OccupancyGroup extends AbstractMessageBody {
     @SerializedName("href")
     public String href;
 

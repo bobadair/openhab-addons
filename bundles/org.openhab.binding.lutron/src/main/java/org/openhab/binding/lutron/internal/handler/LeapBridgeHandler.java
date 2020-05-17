@@ -43,6 +43,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -65,10 +66,11 @@ import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingStatusInfo;
+import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.lutron.internal.config.LeapBridgeConfig;
 import org.openhab.binding.lutron.internal.discovery.LeapDeviceDiscoveryService;
-import org.openhab.binding.lutron.internal.protocol.leap.AbstractBodyType;
+import org.openhab.binding.lutron.internal.protocol.leap.AbstractMessageBody;
 import org.openhab.binding.lutron.internal.protocol.leap.Area;
 import org.openhab.binding.lutron.internal.protocol.leap.ButtonGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.CommandType;
@@ -102,7 +104,7 @@ import com.google.gson.JsonSyntaxException;
  * @author Bob Adair - Initial contribution
  */
 @NonNullByDefault
-public class LeapBridgeHandler extends AbstractBridgeHandler {
+public class LeapBridgeHandler extends LutronBridgeHandler {
     private static final int DEFAULT_RECONNECT_MINUTES = 5;
     private static final int DEFAULT_HEARTBEAT_MINUTES = 5;
     private static final long KEEPALIVE_TIMEOUT_SECONDS = 30;
@@ -142,6 +144,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
     private @Nullable Map<Integer, List<Integer>> deviceButtonMap;
     private final Object deviceButtonMapLock = new Object();
+
+    private final Map<Integer, LutronHandler> childHandlerMap = new ConcurrentHashMap<>();
+    private final Map<Integer, GroupHandler> groupHandlerMap = new ConcurrentHashMap<>();
 
     // private @Nullable Date lastDbUpdateDate;
     private @Nullable LeapDeviceDiscoveryService discoveryService;
@@ -257,6 +262,9 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 return;
             }
         }
+
+        childHandlerMap.clear(); // TODO: Should these be here or in the constructor?
+        groupHandlerMap.clear();
 
         updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Connecting");
         scheduler.submit(this::connect); // start the async connect task
@@ -505,16 +513,11 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     private void handleReadResponseMessage(JsonObject message) {
         try {
             JsonObject header = message.get("Header").getAsJsonObject();
-
             if (!header.has("MessageBodyType")) {
                 logger.trace("No MessageBodyType in header");
                 return;
             }
             String messageBodyType = header.get("MessageBodyType").getAsString();
-            // if (messageBodyType == null) {
-            // logger.trace("No MessageBodyType in header");
-            // return;
-            // }
             logger.trace("MessageBodyType: {}", messageBodyType);
 
             if (!message.has("Body")) {
@@ -525,25 +528,25 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
             switch (messageBodyType) {
                 case "OnePingResponse":
-                    handleOnePingResponse(body);
+                    parseOnePingResponse(body);
                     break;
                 case "OneZoneStatus":
-                    handleOneZoneStatus(body);
+                    parseOneZoneStatus(body);
                     break;
                 case "MultipleAreaDefinition":
-                    handleMultipleAreaDefinition(body);
+                    parseMultipleAreaDefinition(body);
                     break;
                 case "MultipleButtonGroupDefinition":
-                    handleMultipleButtonGroupDefinition(body);
+                    parseMultipleButtonGroupDefinition(body);
                     break;
                 case "MultipleDeviceDefinition":
-                    handleMultipleDeviceDefinition(body);
+                    parseMultipleDeviceDefinition(body);
                     break;
                 case "MultipleOccupancyGroupDefinition":
-                    handleMultipleOccupancyGroupDefinition(body);
+                    parseMultipleOccupancyGroupDefinition(body);
                     break;
                 case "MultipleOccupancyGroupStatus":
-                    handleMultipleOccupancyGroupStatus(body);
+                    parseMultipleOccupancyGroupStatus(body);
                     break;
                 case "MultipleVirtualButtonDefinition":
                     break;
@@ -557,7 +560,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
-    private @Nullable <T extends AbstractBodyType> T parseBodySingle(JsonObject messageBody, String memberName,
+    private @Nullable <T extends AbstractMessageBody> T parseBodySingle(JsonObject messageBody, String memberName,
             Class<T> type) {
         try {
             if (messageBody.has(memberName)) {
@@ -574,7 +577,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
-    private <T extends AbstractBodyType> List<T> parseBodyMultiple(JsonObject messageBody, String memberName,
+    private <T extends AbstractMessageBody> List<T> parseBodyMultiple(JsonObject messageBody, String memberName,
             Class<T> type) {
         List<T> objList = new LinkedList<T>();
         try {
@@ -597,24 +600,24 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
         }
     }
 
-    private void handleOnePingResponse(JsonObject messageBody) {
+    private void parseOnePingResponse(JsonObject messageBody) {
         logger.debug("Ping response received");
     }
 
     /**
      * Parses a OneZoneStatus message body. Calls handleZoneUpdate() to dispatch zone updates.
      */
-    private void handleOneZoneStatus(JsonObject messageBody) {
+    private void parseOneZoneStatus(JsonObject messageBody) {
         ZoneStatus zoneStatus = parseBodySingle(messageBody, "ZoneStatus", ZoneStatus.class);
         if (zoneStatus != null) {
-            handleZoneUpdate(zoneStatus);
+            handleZoneStatus(zoneStatus);
         }
     }
 
     /**
      * Parses a MultipleAreaDefinition message body.
      */
-    private void handleMultipleAreaDefinition(JsonObject messageBody) {
+    private void parseMultipleAreaDefinition(JsonObject messageBody) {
         logger.trace("Parsing area list");
         List<Area> areaList = parseBodyMultiple(messageBody, "Areas", Area.class);
         for (Area area : areaList) {
@@ -626,7 +629,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     /**
      * Parses a MultipleOccupancyGroupDefinition message body.
      */
-    private void handleMultipleOccupancyGroupDefinition(JsonObject messageBody) {
+    private void parseMultipleOccupancyGroupDefinition(JsonObject messageBody) {
         logger.trace("Parsing occupancy group list");
         List<OccupancyGroup> occuGroupList = parseBodyMultiple(messageBody, "OccupancyGroups", OccupancyGroup.class);
         for (OccupancyGroup occuGroup : occuGroupList) {
@@ -638,13 +641,16 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     /**
      * Parses a MultipleOccupancyGroupStatus message body and updates occupancy status.
      */
-    private void handleMultipleOccupancyGroupStatus(JsonObject messageBody) {
+    private void parseMultipleOccupancyGroupStatus(JsonObject messageBody) {
         logger.trace("Parsing occupancy group status list");
         List<OccupancyGroupStatus> statusList = parseBodyMultiple(messageBody, "OccupancyGroupStatuses",
                 OccupancyGroupStatus.class);
         for (OccupancyGroupStatus status : statusList) {
-            logger.debug("OccupancyGroup: {} Status: {}", status.occupancyGroup.href, status.occupancyStatus);
-            // TODO: Dispatch OccupancyGroup status updates
+            int groupNumber = status.getOccupancyGroup();
+            if (groupNumber > 0) {
+                logger.debug("OccupancyGroup: {} Status: {}", groupNumber, status.occupancyStatus);
+                handleGroupUpdate(groupNumber, status.occupancyStatus);
+            }
         }
     }
 
@@ -652,7 +658,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
      * Parses a MultipleDeviceDefinition message body and loads the zoneToDevice and deviceToZone maps. Also passes the
      * device data on to the discovery service and calls setBridgeProperties() with the hub's device entry.
      */
-    private void handleMultipleDeviceDefinition(JsonObject messageBody) {
+    private void parseMultipleDeviceDefinition(JsonObject messageBody) {
         List<Device> deviceList = parseBodyMultiple(messageBody, "Devices", Device.class);
         synchronized (zoneMapsLock) {
             zoneToDevice.clear();
@@ -695,7 +701,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     /**
      * Parse a MultipleButtonGroupDefinition message body and load the results into deviceButtonMap.
      */
-    private void handleMultipleButtonGroupDefinition(JsonObject messageBody) {
+    private void parseMultipleButtonGroupDefinition(JsonObject messageBody) {
         Map<Integer, List<Integer>> deviceButtonMap = new HashMap<>();
 
         List<ButtonGroup> buttonGroupList = parseBodyMultiple(messageBody, "ButtonGroups", ButtonGroup.class);
@@ -713,7 +719,7 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     /**
      * Notify child thing handler of a zonelevel update from a received zone status message.
      */
-    private void handleZoneUpdate(ZoneStatus zoneStatus) {
+    private void handleZoneStatus(ZoneStatus zoneStatus) {
         logger.trace("zone {} status level: {}", zoneStatus.getZone(), zoneStatus.level);
         int integrationId = zoneToDevice(zoneStatus.getZone());
 
@@ -730,6 +736,46 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             }
         } else {
             logger.debug("No thing configured for integration ID {}", integrationId);
+        }
+    }
+
+    /**
+     * Notify child group handler of a received occupancy group update.
+     *
+     * @param occupancyStatus
+     * @param groupNumber
+     */
+    private void handleGroupUpdate(int groupNumber, String occupancyStatus) {
+        logger.trace("Group {} state update: {}", groupNumber, occupancyStatus);
+
+        // dispatch update to proper handler
+        GroupHandler handler = findGroupHandler(groupNumber);
+        if (handler != null) {
+            try {
+                switch (occupancyStatus) {
+                    case "Occupied":
+                        handler.handleUpdate(LutronCommandType.GROUP, LutronCommand.ACTION_GROUPSTATE.toString(),
+                                LutronCommand.STATE_GRP_OCCUPIED.toString());
+                        break;
+                    case "Unoccupied":
+                        handler.handleUpdate(LutronCommandType.GROUP, LutronCommand.ACTION_GROUPSTATE.toString(),
+                                LutronCommand.STATE_GRP_UNOCCUPIED.toString());
+                        break;
+                    case "Unknown":
+                        handler.handleUpdate(LutronCommandType.GROUP, LutronCommand.ACTION_GROUPSTATE.toString(),
+                                LutronCommand.STATE_GRP_UNKNOWN.toString());
+                        break;
+                    default:
+                        logger.debug("Unexpected occupancy status: {}", occupancyStatus);
+                        return;
+                }
+            } catch (NumberFormatException e) {
+                logger.warn("Number format exception parsing update");
+            } catch (RuntimeException e) {
+                logger.warn("Runtime exception while processing update");
+            }
+        } else {
+            logger.debug("No group thing configured for group ID {}", groupNumber);
         }
     }
 
@@ -772,6 +818,8 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
 
         if (command.getOperation() == LutronOperation.QUERY && command.getType() == LutronCommandType.OUTPUT) {
             queryOutputToLeap(command);
+        } else if (command.getOperation() == LutronOperation.QUERY && command.getType() == LutronCommandType.GROUP) {
+            queryGroupToLeap(command);
         } else if (command.getOperation() == LutronOperation.EXECUTE && command.getType() == LutronCommandType.OUTPUT) {
             execOutputToLeap(command);
         } else if (command.getOperation() == LutronOperation.EXECUTE && command.getType() == LutronCommandType.DEVICE) {
@@ -796,6 +844,18 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
                 logger.debug("Dropping query output command for ID {}. No zone mapping available.",
                         command.getIntegrationId());
             }
+        }
+    }
+
+    /**
+     * Translates a query occupancy group LutronCommand (i.e. a LIP ?GROUP command) to LEAP protocol.
+     */
+    private void queryGroupToLeap(LutronCommand command) {
+        int action = command.getNumberParameter(0);
+
+        if (action == LutronCommand.ACTION_GROUPSTATE) {
+            // Get status for all occupancy groups because you can't query just one
+            sendCommand(new LeapCommand(Request.getOccupancyGroupStatus()));
         }
     }
 
@@ -926,20 +986,11 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
     }
 
     private @Nullable LutronHandler findThingHandler(int integrationId) {
-        for (Thing thing : getThing().getThings()) {
-            if (thing.getHandler() instanceof LutronHandler) {
-                LutronHandler handler = (LutronHandler) thing.getHandler();
+        return childHandlerMap.get(integrationId);
+    }
 
-                try {
-                    if (handler != null && handler.getIntegrationId() == integrationId) {
-                        return handler;
-                    }
-                } catch (IllegalStateException e) {
-                    logger.trace("Handler for id {} not initialized", integrationId);
-                }
-            }
-        }
-        return null;
+    private @Nullable GroupHandler findGroupHandler(int integrationId) {
+        return groupHandlerMap.get(integrationId);
     }
 
     private @Nullable Integer zoneToDevice(int zone) {
@@ -983,6 +1034,37 @@ public class LeapBridgeHandler extends AbstractBridgeHandler {
             if (command instanceof StringType) {
                 sendCommand(new LeapCommand(command.toString()));
             }
+        }
+    }
+
+    @Override
+    public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
+        if (childHandler instanceof GroupHandler) {
+            // We need a different map for group things because the numbering is separate
+            GroupHandler handler = (GroupHandler) childHandler;
+            int groupId = handler.getIntegrationId();
+            groupHandlerMap.put(groupId, handler);
+            logger.trace("Registered group handler for ID {}", groupId);
+        } else {
+            LutronHandler handler = (LutronHandler) childHandler;
+            int intId = handler.getIntegrationId();
+            childHandlerMap.put(intId, handler);
+            logger.trace("Registered child handler for ID {}", intId);
+        }
+    }
+
+    @Override
+    public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
+        if (childHandler instanceof GroupHandler) {
+            GroupHandler handler = (GroupHandler) childHandler;
+            int groupId = handler.getIntegrationId();
+            groupHandlerMap.remove(groupId);
+            logger.trace("Unregistered group handler for ID {}", groupId);
+        } else {
+            LutronHandler handler = (LutronHandler) childHandler;
+            int intId = handler.getIntegrationId();
+            childHandlerMap.remove(intId);
+            logger.trace("Unregistered child handler for ID {}", intId);
         }
     }
 
