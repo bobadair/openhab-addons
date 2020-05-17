@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.lutron.internal.protocol.leap;
 
+import java.util.regex.Pattern;
+
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -19,7 +21,9 @@ import com.google.gson.annotations.SerializedName;
  *
  * @author Bob Adair - Initial contribution
  */
-public class OccupancyGroupStatus extends AbstractBodyType {
+public class OccupancyGroupStatus extends AbstractMessageBody {
+    private static final Pattern OGROUP_HREF_PATTERN = Pattern.compile("/occupancygroup/([0-9]+)");
+
     @SerializedName("href")
     public String href;
 
@@ -30,5 +34,13 @@ public class OccupancyGroupStatus extends AbstractBodyType {
     public String occupancyStatus; // Occupied, Unoccupied, or Unknown
 
     public OccupancyGroupStatus() {
+    }
+
+    public int getOccupancyGroup() {
+        if (occupancyGroup != null && occupancyGroup.href != null) {
+            return hrefNumber(OGROUP_HREF_PATTERN, occupancyGroup.href);
+        } else {
+            return 0;
+        }
     }
 }

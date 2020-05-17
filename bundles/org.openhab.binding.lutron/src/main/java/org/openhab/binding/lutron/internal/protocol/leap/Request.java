@@ -91,6 +91,10 @@ public class Request {
         return request(CommuniqueType.READREQUEST, String.format("/zone/%d/status", zone));
     }
 
+    public static String getOccupancyGroupStatus() {
+        return request(CommuniqueType.READREQUEST, "/occupancygroup/status");
+    }
+
     public static String subscribeOccupancyGroupStatus() {
         return request(CommuniqueType.SUBSCRIBEREQUEST, "/occupancygroup/status");
     }

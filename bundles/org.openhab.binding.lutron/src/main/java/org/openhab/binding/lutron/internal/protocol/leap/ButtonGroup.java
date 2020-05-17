@@ -14,10 +14,7 @@ package org.openhab.binding.lutron.internal.protocol.leap;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.eclipse.jdt.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -26,7 +23,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * @author Bob Adair - Initial contribution
  */
-public class ButtonGroup extends AbstractBodyType {
+public class ButtonGroup extends AbstractMessageBody {
     private static final Pattern DEVICE_HREF_PATTERN = Pattern.compile("/device/([0-9]+)");
     private static final Pattern BUTTON_HREF_PATTERN = Pattern.compile("/button/([0-9]+)");
     private static final Pattern BUTTONGROUP_HREF_PATTERN = Pattern.compile("/buttongroup/([0-9]+)");
@@ -49,51 +46,22 @@ public class ButtonGroup extends AbstractBodyType {
     public ButtonGroup() {
     }
 
-    public static int extractButtonNumber(@NonNull String href) {
-        Matcher matcher = BUTTON_HREF_PATTERN.matcher(href);
-        if (matcher.find()) {
-            try {
-                return Integer.parseInt(matcher.group(1));
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }
-        return 0;
+    public int getButtonGroup() {
+        return hrefNumber(BUTTONGROUP_HREF_PATTERN, href);
     }
 
     public int getParentDevice() {
         if (parent != null && parent.href != null) {
-            Matcher matcher = DEVICE_HREF_PATTERN.matcher(parent.href);
-            if (matcher.find()) {
-                try {
-                    return Integer.parseInt(matcher.group(1));
-                } catch (NumberFormatException e) {
-                    return 0;
-                }
-            }
+            return hrefNumber(DEVICE_HREF_PATTERN, parent.href);
+        } else {
+            return 0;
         }
-        return 0;
-    }
-
-    public int getButtonGroup() {
-        // TODO: Abstract out numberFromHref(href, matcher)
-        if (href != null) {
-            Matcher matcher = BUTTONGROUP_HREF_PATTERN.matcher(href);
-            if (matcher.find()) {
-                try {
-                    return Integer.parseInt(matcher.group(1));
-                } catch (NumberFormatException e) {
-                    return 0;
-                }
-            }
-        }
-        return 0;
     }
 
     public List<Integer> getButtonList() {
         LinkedList<Integer> buttonNumList = new LinkedList<>();
         for (Href button : buttons) {
-            int buttonNum = extractButtonNumber(button.href);
+            int buttonNum = hrefNumber(BUTTON_HREF_PATTERN, button.href);
             buttonNumList.add(buttonNum);
         }
         return buttonNumList;
