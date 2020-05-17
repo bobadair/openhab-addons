@@ -82,6 +82,8 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                                 notifyDiscovery(THING_TYPE_VIRTUALKEYPAD, deviceId, label, "model", "Caseta");
                                 break;
                             case "WallDimmer":
+                            case "PlugInDimmer":
+                            case "CasetaFanSpeedController":
                                 notifyDiscovery(THING_TYPE_DIMMER, deviceId, label);
                                 break;
                             case "WallSwitch":
@@ -97,6 +99,10 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                                 notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "3BRL");
                                 break;
                             case "SerenaRollerShade":
+                            case "SerenaHoneycombShade":
+                            case "TriathlonRollerShade":
+                            case "TriathlonHoneycombShade":
+                            case "QsWirelessShade":
                                 notifyDiscovery(THING_TYPE_SHADE, deviceId, label);
                                 break;
                             case "RPSOccupancySensor":

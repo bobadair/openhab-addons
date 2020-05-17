@@ -12,7 +12,6 @@
  */
 package org.openhab.binding.lutron.internal.protocol.leap;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.gson.annotations.SerializedName;
@@ -22,7 +21,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * @author Bob Adair - Initial contribution
  */
-public class ZoneStatus extends AbstractBodyType {
+public class ZoneStatus extends AbstractMessageBody {
     private static final Pattern ZONE_HREF_PATTERN = Pattern.compile("/zone/([0-9]+)");
 
     @SerializedName("href")
@@ -39,33 +38,19 @@ public class ZoneStatus extends AbstractBodyType {
     public ZoneStatus() {
     }
 
-    public ZoneStatus(String href, int level, String switchedLevel, Href zone, String statusAccuracy) {
-        this.href = href;
-        this.level = level;
-        this.switchedLevel = switchedLevel;
-        this.zone = zone;
-        this.statusAccuracy = statusAccuracy;
+    public int getZone() {
+        if (zone != null) {
+            return hrefNumber(ZONE_HREF_PATTERN, zone.href);
+        } else {
+            return 0;
+        }
     }
 
     public boolean statusAccuracyGood() {
-        return statusAccuracy.equals("Good");
+        return "Good".equals(statusAccuracy);
     }
 
     public boolean switchedLevelOn() {
-        return switchedLevel.equals("On");
-    }
-
-    public int getZone() {
-        if (zone != null && zone.href != null) {
-            Matcher matcher = ZONE_HREF_PATTERN.matcher(zone.href);
-            if (matcher.find()) {
-                try {
-                    return Integer.parseInt(matcher.group(1));
-                } catch (NumberFormatException e) {
-                    return 0;
-                }
-            }
-        }
-        return 0;
+        return "On".equals(switchedLevel);
     }
 }
