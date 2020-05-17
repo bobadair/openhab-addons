@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * @author Bob Adair - Added reconnect and heartbeat config parameters, moved discovery service registration to
  *         LutronHandlerFactory
  */
-public class IPBridgeHandler extends AbstractBridgeHandler {
+public class IPBridgeHandler extends LutronBridgeHandler {
     private static final Pattern RESPONSE_REGEX = Pattern
             .compile("~(OUTPUT|DEVICE|SYSTEM|TIMECLOCK|MODE|SYSVAR|GROUP),([0-9\\.:/]+),([0-9,\\.:/]*)\\Z");
 
