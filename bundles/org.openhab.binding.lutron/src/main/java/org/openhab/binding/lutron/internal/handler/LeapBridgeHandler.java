@@ -634,7 +634,10 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         List<OccupancyGroup> occuGroupList = parseBodyMultiple(messageBody, "OccupancyGroups", OccupancyGroup.class);
         for (OccupancyGroup occuGroup : occuGroupList) {
             logger.debug("OccupancyGroup: {}", occuGroup.href);
-            // TODO: Record occupancy group info
+            // TODO: Record any necessary occupancy group info
+            if (occuGroup.AssociatedSensors != null && discoveryService != null) {
+                discoveryService.processOccupancyGroup(occuGroup);
+            }
         }
     }
 
