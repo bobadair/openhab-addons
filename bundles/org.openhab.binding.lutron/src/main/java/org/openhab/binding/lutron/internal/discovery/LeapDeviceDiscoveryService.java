@@ -28,6 +28,7 @@ import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.lutron.internal.LutronHandlerFactory;
 import org.openhab.binding.lutron.internal.handler.LeapBridgeHandler;
 import org.openhab.binding.lutron.internal.protocol.leap.Device;
+import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,6 +117,15 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
             }
         } catch (IllegalStateException | JsonSyntaxException e) {
             logger.debug("Exception parsing device definitions: {}", e.getMessage());
+        }
+    }
+
+    public void processOccupancyGroup(OccupancyGroup occuGroup) {
+        // TODO: Get Area name to use a label
+        // TODO: Ignore if already processed
+        int groupNum = occuGroup.getOccupancyGroup();
+        if (groupNum > 0 && occuGroup.AssociatedSensors != null) {
+            notifyDiscovery(THING_TYPE_GROUP, groupNum, "Occupancy Group");
         }
     }
 
