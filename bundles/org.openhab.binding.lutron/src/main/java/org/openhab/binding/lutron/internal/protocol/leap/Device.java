@@ -12,7 +12,6 @@
  */
 package org.openhab.binding.lutron.internal.protocol.leap;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.gson.annotations.SerializedName;
@@ -22,7 +21,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * @author Bob Adair - Initial contribution
  */
-public class Device extends AbstractBodyType {
+public class Device extends AbstractMessageBody {
     private static final Pattern ZONE_HREF_PATTERN = Pattern.compile("/zone/([0-9]+)");
     private static final Pattern DEVICE_HREF_PATTERN = Pattern.compile("/device/([0-9]+)");
 
@@ -106,31 +105,19 @@ public class Device extends AbstractBodyType {
     }
 
     public int getDevice() {
-        if (href != null) {
-            Matcher matcher = DEVICE_HREF_PATTERN.matcher(href);
-            if (matcher.find()) {
-                try {
-                    return Integer.parseInt(matcher.group(1));
-                } catch (NumberFormatException e) {
-                    return 0;
-                }
-            }
-        }
-        return 0;
+        return hrefNumber(DEVICE_HREF_PATTERN, href);
     }
 
+    /**
+     * Returns the zone number of the first zone listed in LocalZones.
+     * Currently devices should only have one zone listed.
+     */
     public int getZone() {
         if (localZones != null && localZones.length > 0) {
-            Matcher matcher = ZONE_HREF_PATTERN.matcher(localZones[0].href);
-            if (matcher.find()) {
-                try {
-                    return Integer.parseInt(matcher.group(1));
-                } catch (NumberFormatException e) {
-                    return 0;
-                }
-            }
+            return hrefNumber(ZONE_HREF_PATTERN, localZones[0].href);
+        } else {
+            return 0;
         }
-        return 0;
     }
 
     public String getFullyQualifiedName() {

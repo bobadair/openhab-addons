@@ -58,10 +58,10 @@ public abstract class LutronHandler extends BaseThingHandler {
     protected void thingOfflineNotify() {
     }
 
-    protected @Nullable AbstractBridgeHandler getBridgeHandler() {
+    protected @Nullable LutronBridgeHandler getBridgeHandler() {
         Bridge bridge = getBridge();
 
-        return bridge == null ? null : (AbstractBridgeHandler) bridge.getHandler();
+        return bridge == null ? null : (LutronBridgeHandler) bridge.getHandler();
     }
 
     @Override
@@ -80,7 +80,7 @@ public abstract class LutronHandler extends BaseThingHandler {
     }
 
     private void sendCommand(LutronCommand command) {
-        AbstractBridgeHandler bridgeHandler = getBridgeHandler();
+        LutronBridgeHandler bridgeHandler = getBridgeHandler();
 
         if (bridgeHandler == null) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.HANDLER_MISSING_ERROR, "No bridge associated");

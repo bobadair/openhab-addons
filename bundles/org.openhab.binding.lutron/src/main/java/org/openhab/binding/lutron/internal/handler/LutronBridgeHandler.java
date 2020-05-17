@@ -23,9 +23,9 @@ import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
  * @author Bob Adair - Initial contribution
  */
 @NonNullByDefault
-public abstract class AbstractBridgeHandler extends BaseBridgeHandler {
+public abstract class LutronBridgeHandler extends BaseBridgeHandler {
 
-    public AbstractBridgeHandler(Bridge bridge) {
+    public LutronBridgeHandler(Bridge bridge) {
         super(bridge);
     }
 
