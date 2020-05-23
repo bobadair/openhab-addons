@@ -23,6 +23,7 @@ The binding supports the following thing types:
 * `keypad` - Reports keypad status and optionally sends keypad messages.
 * `zone` - Reports status from zone expanders and relay expanders, and also from built-in zones via emulation.
 * `rfzone` - Reports status from RF zones.
+* `vzone` - Sends commands to virtual zones.
 * `lrr` - Reports messages sent from the panel to a Long Range Radio (LRR) or emulated LRR device.
 
 ## Discovery
@@ -115,6 +116,37 @@ Thing config file example:
   Thing rfzone motion1 [ serial=0180010 ]
 ```
 
+### vzone
+
+The `vzone` thing sends open/close commands a virtual zone.
+After enabling zone expander emulation on both the alarm panel and the Alarm Decoder device, it can be used to control the state of a virtual zone.
+The `command` channel is write-only, and accepts either the string "OPEN" or the string "CLOSED".
+
+Parameters:
+
+* `address` (required) Virtual zone number (0-99)
+
+Thing config file example:
+
+```
+  Thing vzone watersensor [ address=41 ]
+```
+
+### rfzone
+
+The `rfzone` thing reports status from wireless zones, such as 5800 series RF devices, if your alarm panel has an RF receiver.
+
+Parameters:
+
+* `serial` (required) Serial number of the RF zone
+
+Thing config file example:
+
+```
+  Thing rfzone motion1 [ serial=0180010 ]
+```
+
+
 ### keypad
 
 The `keypad` thing reports keypad status and optionally sends keypad messages.
@@ -174,6 +206,12 @@ The alarmdecoder things expose the following channels:
 | loop2        | Contact | RO  |Loop 2 state                  |
 | loop3        | Contact | RO  |Loop 3 state                  |
 | loop4        | Contact | RO  |Loop 4 state                  |
+
+**vzone**
+
+|  channel     | type    |RO/RW| description                  |
+|--------------|---------|-----|------------------------------|
+| command      | String  | WO  |"OPEN" or "CLOSED" command    |
 
 **keypad**
 
