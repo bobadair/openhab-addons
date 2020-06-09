@@ -29,6 +29,14 @@ public class Request {
         return String.format(request, zone, value);
     }
 
+    public static String goToDimmedLevel(int zone, int value, String fadeTime) {
+        String request = "{\"CommuniqueType\": \"CreateRequest\","
+                + "\"Header\": {\"Url\": \"/zone/%d/commandprocessor\"},\"Body\": {\"Command\": {"
+                + "\"CommandType\": \"GoToDimmedLevel\","
+                + "\"DimmedLevelParameters\": {\"Level\": %d, \"FadeTime\": \"%s\"}}}}";
+        return String.format(request, zone, value);
+    }
+
     public static String goToFanSpeed(int zone, FanSpeedType fanSpeed) {
         String request = "{\"CommuniqueType\": \"CreateRequest\","
                 + "\"Header\": {\"Url\": \"/zone/%d/commandprocessor\"}," + "\"Body\": {"
