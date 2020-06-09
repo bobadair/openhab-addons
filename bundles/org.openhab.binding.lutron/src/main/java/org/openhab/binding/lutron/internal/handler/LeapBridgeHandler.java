@@ -723,8 +723,14 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
      * Notify child thing handler of a zonelevel update from a received zone status message.
      */
     private void handleZoneStatus(ZoneStatus zoneStatus) {
-        logger.trace("zone {} status level: {}", zoneStatus.getZone(), zoneStatus.level);
-        int integrationId = zoneToDevice(zoneStatus.getZone());
+        logger.trace("Zone: {} level: {}", zoneStatus.getZone(), zoneStatus.level);
+        Integer integrationId = zoneToDevice(zoneStatus.getZone());
+
+        if (integrationId == null) {
+            logger.debug("Unable to map zone {} to device", zoneStatus.getZone());
+            return;
+        }
+        logger.trace("Zone {} mapped to device id {}", zoneStatus.getZone(), integrationId);
 
         // dispatch update to proper thing handler
         LutronHandler handler = findThingHandler(integrationId);
@@ -988,8 +994,12 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         }
     }
 
-    private @Nullable LutronHandler findThingHandler(int integrationId) {
-        return childHandlerMap.get(integrationId);
+    private @Nullable LutronHandler findThingHandler(@Nullable Integer integrationId) {
+        if (integrationId != null) {
+            return childHandlerMap.get(integrationId);
+        } else {
+            return null;
+        }
     }
 
     private @Nullable GroupHandler findGroupHandler(int integrationId) {
