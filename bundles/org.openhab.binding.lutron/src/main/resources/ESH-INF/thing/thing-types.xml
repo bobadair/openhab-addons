@@ -134,7 +134,7 @@
 	</bridge-type>
 
 	<channel-type id="command-type" advanced="true">
-		<item-type>Text</item-type>
+		<item-type>String</item-type>
 		<label>LEAP Command</label>
 		<description>LEAP command to send (for debugging)</description>
 	</channel-type>
@@ -1248,7 +1248,7 @@
 	</channel-type>
 
 	<channel-type id="groupState">
-		<item-type>Text</item-type>
+		<item-type>String</item-type>
 		<label>Occupancy State</label>
 		<category>Motion</category>
 		<state readOnly="true">
