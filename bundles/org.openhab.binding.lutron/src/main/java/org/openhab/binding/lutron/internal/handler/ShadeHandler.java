@@ -45,6 +45,7 @@ public class ShadeHandler extends LutronHandler {
     private final Logger logger = LoggerFactory.getLogger(ShadeHandler.class);
 
     protected int integrationId;
+    private boolean leap = false;
 
     public ShadeHandler(Thing thing) {
         super(thing);
@@ -64,6 +65,11 @@ public class ShadeHandler extends LutronHandler {
         }
         integrationId = id.intValue();
         logger.debug("Initializing Shade handler for integration ID {}", id);
+
+        LutronBridgeHandler bridgeHandler = getBridgeHandler();
+        if (bridgeHandler instanceof LeapBridgeHandler) {
+            leap = true;
+        }
 
         initDeviceState();
     }
@@ -98,10 +104,19 @@ public class ShadeHandler extends LutronHandler {
             if (command instanceof PercentType) {
                 int level = ((PercentType) command).intValue();
                 output(TargetType.SHADE, LutronCommand.ACTION_ZONELEVEL, level, 0);
+                // TODO: update channel state here?
             } else if (command.equals(UpDownType.UP)) {
                 output(TargetType.SHADE, LutronCommand.ACTION_STARTRAISING);
+                if (leap) {
+                    // LEAP won't send a position update
+                    updateState(CHANNEL_SHADELEVEL, new PercentType(100));
+                }
             } else if (command.equals(UpDownType.DOWN)) {
                 output(TargetType.SHADE, LutronCommand.ACTION_STARTLOWERING);
+                if (leap) {
+                    // LEAP won't send a position update
+                    updateState(CHANNEL_SHADELEVEL, new PercentType(0));
+                }
             } else if (command.equals(StopMoveType.STOP)) {
                 output(TargetType.SHADE, LutronCommand.ACTION_STOP);
             } else if (command instanceof RefreshType) {
