@@ -897,10 +897,8 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
                 sendCommand(new LeapCommand(Request.goToLevel(zoneInt, value)));
             } else if (action == LutronCommand.ACTION_STARTRAISING) {
                 sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.RAISE)));
-                // TODO: Set channel to 100%
             } else if (action == LutronCommand.ACTION_STARTLOWERING) {
                 sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.LOWER)));
-                // TODO: Set channel to 0%
             } else if (action == LutronCommand.ACTION_STOP) {
                 sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.STOP)));
             } else {
