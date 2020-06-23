@@ -117,6 +117,8 @@ If you need this useful feature, you should use ipbridge instead.
 You can use both ipbridge and leapbridge at the same time, but each device should only be configured through one bridge.
 You should also be aware that LEAP and LIP integration IDs for the same device can be different.
 
+For additional information on LEAP and instructions on configuring authentication for leapbridge, see the [Leap Notes](doc/leapnotes.md) document.
+
 The optional advanced parameter `heartbeat` can be used to set the interval between connection keepalive heartbeat messages, in minutes.
 It defaults to 5.
 Note that the handler will wait up to 30 seconds for a heartbeat response before attempting to reconnect.
