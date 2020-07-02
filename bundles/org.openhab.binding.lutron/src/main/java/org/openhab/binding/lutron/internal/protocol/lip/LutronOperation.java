@@ -13,14 +13,15 @@
 package org.openhab.binding.lutron.internal.protocol.lip;
 
 /**
- * Requested operation of a command to the Lutron integration protocol.
+ * Requested operation of a command in the Lutron integration protocol.
  *
  * @author Allan Tong - Initial contribution
  *
  */
 public enum LutronOperation {
     EXECUTE("#"),
-    QUERY("?");
+    QUERY("?"),
+    RESPONSE("~");
 
     private final String operationChar;
 

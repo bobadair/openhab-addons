@@ -390,8 +390,11 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
                 case FLUORESCENT_DB:
                 case ZERO_TO_TEN:
                 case AUTO_DETECT:
-                case CEILING_FAN_TYPE:
                     notifyDiscovery(THING_TYPE_DIMMER, output.getIntegrationId(), label);
+                    break;
+
+                case CEILING_FAN_TYPE:
+                    notifyDiscovery(THING_TYPE_FAN, output.getIntegrationId(), label);
                     break;
 
                 case NON_DIM:

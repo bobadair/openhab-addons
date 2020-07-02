@@ -37,7 +37,8 @@ import org.openhab.binding.lutron.internal.config.IPBridgeConfig;
 import org.openhab.binding.lutron.internal.discovery.LutronDeviceDiscoveryService;
 import org.openhab.binding.lutron.internal.net.TelnetSession;
 import org.openhab.binding.lutron.internal.net.TelnetSessionListener;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
+import org.openhab.binding.lutron.internal.protocol.LIPCommand;
+import org.openhab.binding.lutron.internal.protocol.LutronCommandNew;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
 import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
@@ -85,7 +86,7 @@ public class IPBridgeHandler extends LutronBridgeHandler {
     private int sendDelay;
 
     private TelnetSession session;
-    private BlockingQueue<LutronCommand> sendQueue = new LinkedBlockingQueue<>();
+    private BlockingQueue<LutronCommandNew> sendQueue = new LinkedBlockingQueue<>();
 
     private Thread messageSender;
     private ScheduledFuture<?> keepAlive;
@@ -206,8 +207,8 @@ public class IPBridgeHandler extends LutronBridgeHandler {
         updateStatus(ThingStatus.ONLINE);
 
         // Disable prompts
-        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.EXECUTE, LutronCommandType.MONITORING, -1,
-                null, MONITOR_PROMPT, MONITOR_DISABLE));
+        sendCommand(new LIPCommand(TargetType.BRIDGE, LutronOperation.EXECUTE, LutronCommandType.MONITORING, null,
+                MONITOR_PROMPT, MONITOR_DISABLE));
 
         if (requireSysvarMonitoring.get()) {
             setSysvarMonitoring(true);
@@ -215,7 +216,7 @@ public class IPBridgeHandler extends LutronBridgeHandler {
 
         // Check the time device database was last updated. On the initial connect, this will trigger
         // a scan for paired devices.
-        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, -1, null,
+        sendCommand(new LIPCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, null,
                 SYSTEM_DBEXPORTDATETIME));
 
         messageSender = new Thread(this::sendCommandsThread, "Lutron sender");
@@ -229,7 +230,7 @@ public class IPBridgeHandler extends LutronBridgeHandler {
     private void sendCommandsThread() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                LutronCommand command = sendQueue.take();
+                LutronCommandNew command = sendQueue.take();
 
                 logger.debug("Sending command {}", command);
 
@@ -319,8 +320,8 @@ public class IPBridgeHandler extends LutronBridgeHandler {
     }
 
     @Override
-    public void sendCommand(LutronCommand command) {
-        this.sendQueue.add(command);
+    public void sendCommand(LutronCommandNew command) {
+        sendQueue.add(command);
     }
 
     private LutronHandler findThingHandler(int integrationId) {
@@ -425,7 +426,7 @@ public class IPBridgeHandler extends LutronBridgeHandler {
         keepAliveReconnect = scheduler.schedule(this::reconnect, KEEPALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         logger.trace("Sending keepalive query");
-        sendCommand(new LutronCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, -1, null,
+        sendCommand(new LIPCommand(TargetType.BRIDGE, LutronOperation.QUERY, LutronCommandType.SYSTEM, null,
                 SYSTEM_DBEXPORTDATETIME));
     }
 
