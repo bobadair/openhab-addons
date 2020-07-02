@@ -15,7 +15,6 @@ package org.openhab.binding.lutron.internal.handler;
 import static org.openhab.binding.lutron.internal.LutronBindingConstants.*;
 
 import java.math.BigDecimal;
-import java.util.Locale;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -153,17 +152,16 @@ public class CcoHandler extends LutronHandler {
         if (channelUID.getId().equals(CHANNEL_SWITCH)) {
             if (command instanceof OnOffType && command == OnOffType.ON) {
                 if (outputType == CcoOutputType.PULSED) {
-                    output(TargetType.CCO, LutronCommand.ACTION_PULSE,
-                            String.format(Locale.ROOT, "%.2f", defaultPulse));
+                    output(TargetType.CCO, LutronCommand.ACTION_PULSE, new Double(defaultPulse), null, null);
                     updateState(channelUID, OnOffType.OFF);
                 } else {
-                    output(TargetType.CCO, LutronCommand.ACTION_STATE, 100);
+                    output(TargetType.CCO, LutronCommand.ACTION_STATE, 100, null, null);
                 }
             }
 
             else if (command instanceof OnOffType && command == OnOffType.OFF) {
                 if (outputType == CcoOutputType.MAINTAINED) {
-                    output(TargetType.CCO, LutronCommand.ACTION_STATE, 0);
+                    output(TargetType.CCO, LutronCommand.ACTION_STATE, 0, null, null);
                 }
             }
 

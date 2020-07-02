@@ -84,11 +84,13 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                                 break;
                             case "WallDimmer":
                             case "PlugInDimmer":
-                            case "CasetaFanSpeedController":
                                 notifyDiscovery(THING_TYPE_DIMMER, deviceId, label);
                                 break;
                             case "WallSwitch":
                                 notifyDiscovery(THING_TYPE_SWITCH, deviceId, label);
+                                break;
+                            case "CasetaFanSpeedController":
+                                notifyDiscovery(THING_TYPE_FAN, deviceId, label);
                                 break;
                             case "Pico2Button":
                                 notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "2B");
@@ -110,6 +112,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                                 notifyDiscovery(THING_TYPE_OCCUPANCYSENSOR, deviceId, label);
                                 break;
                             default:
+                                logger.info("Unrecognized device type: {}", device.deviceType);
                                 break;
                         }
                     }

@@ -13,6 +13,7 @@
 package org.openhab.binding.lutron.internal.protocol.leap;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.openhab.binding.lutron.internal.protocol.FanSpeedType;
 
 /**
  * Contains static methods for constructing LEAP messages

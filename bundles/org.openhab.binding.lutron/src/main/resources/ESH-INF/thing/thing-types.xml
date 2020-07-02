@@ -170,6 +170,28 @@
 		</config-description>
 	</thing-type>
 
+	<thing-type id="fan">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="ipbridge"/>
+			<bridge-type-ref id="leapbridge"/>
+		</supported-bridge-type-refs>
+
+		<label>Fan Speed Controller</label>
+		<description>Controls ceiling fans</description>
+
+		<channels>
+			<channel id="fanspeed" typeId="fanControl"/>
+			<channel id="lightlevel" typeId="lightDimmer"/>
+		</channels>
+
+		<config-description>
+			<parameter name="integrationId" type="integer" required="true">
+				<label>Integration ID</label>
+				<description>Address of fan controller in the Lutron system</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+
 	<thing-type id="shade">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="ipbridge"/>
@@ -1265,6 +1287,20 @@
 		<description>Occupancy status</description>
 		<category>Motion</category>
 		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="fanControl">
+		<item-type>String</item-type>
+		<label>Fan Speed</label>
+		<state readOnly="false">
+			<options>
+				<option value="OFF">Off</option>
+				<option value="LOW">Low</option>
+				<option value="MEDIUM">Medium</option>
+				<option value="MEDIUMHIGH">MediumHigh</option>
+				<option value="HIGH">High</option>
+			</options>
+		</state>
 	</channel-type>
 
 	<channel-type id="groupState">
