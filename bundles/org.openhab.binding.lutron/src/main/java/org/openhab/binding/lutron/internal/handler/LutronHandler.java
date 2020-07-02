@@ -20,7 +20,12 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
+import org.openhab.binding.lutron.internal.protocol.DeviceCommand;
+import org.openhab.binding.lutron.internal.protocol.GroupCommand;
+import org.openhab.binding.lutron.internal.protocol.LutronCommandNew;
+import org.openhab.binding.lutron.internal.protocol.ModeCommand;
+import org.openhab.binding.lutron.internal.protocol.OutputCommand;
+import org.openhab.binding.lutron.internal.protocol.TimeclockCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
 import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
@@ -79,7 +84,18 @@ public abstract class LutronHandler extends BaseThingHandler {
         }
     }
 
-    private void sendCommand(LutronCommand command) {
+    // private void sendCommand(LutronCommand command) {
+    // LutronBridgeHandler bridgeHandler = getBridgeHandler();
+    //
+    // if (bridgeHandler == null) {
+    // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.HANDLER_MISSING_ERROR, "No bridge associated");
+    // thingOfflineNotify();
+    // } else {
+    // bridgeHandler.sendCommand(command);
+    // }
+    // }
+
+    protected void sendCommand(LutronCommandNew command) {
         LutronBridgeHandler bridgeHandler = getBridgeHandler();
 
         if (bridgeHandler == null) {
@@ -90,53 +106,44 @@ public abstract class LutronHandler extends BaseThingHandler {
         }
     }
 
-    protected void output(TargetType type, Object... parameters) {
-        sendCommand(new LutronCommand(type, LutronOperation.EXECUTE, LutronCommandType.OUTPUT, getIntegrationId(), null,
-                parameters));
+    protected void output(TargetType type, int action, @Nullable Number parameter, @Nullable Object fade,
+            @Nullable Object delay) {
+        sendCommand(
+                new OutputCommand(type, LutronOperation.EXECUTE, getIntegrationId(), action, parameter, fade, delay));
     }
 
-    protected void device(TargetType type, @Nullable Integer leapComponent, Object... parameters) {
-        sendCommand(new LutronCommand(type, LutronOperation.EXECUTE, LutronCommandType.DEVICE, getIntegrationId(),
-                leapComponent, parameters));
+    protected void queryOutput(TargetType type, int action) {
+        sendCommand(
+                new OutputCommand(type, LutronOperation.QUERY, getIntegrationId(), action, (Integer) null, null, null));
     }
 
-    protected void device(TargetType type, Object... parameters) {
-        sendCommand(new LutronCommand(type, LutronOperation.EXECUTE, LutronCommandType.DEVICE, getIntegrationId(), null,
-                parameters));
+    protected void device(TargetType type, Integer component, @Nullable Integer leapComponent, Integer action,
+            @Nullable Object parameter) {
+        sendCommand(new DeviceCommand(type, LutronOperation.EXECUTE, getIntegrationId(), component, leapComponent,
+                action, parameter));
     }
 
-    protected void timeclock(Object... parameters) {
-        sendCommand(new LutronCommand(TargetType.TIMECLOCK, LutronOperation.EXECUTE, LutronCommandType.TIMECLOCK,
-                getIntegrationId(), null, parameters));
+    protected void queryDevice(TargetType type, Integer component, Integer action) {
+        sendCommand(new DeviceCommand(type, LutronOperation.QUERY, getIntegrationId(), component, null, action, null));
     }
 
-    protected void greenMode(Object... parameters) {
-        sendCommand(new LutronCommand(TargetType.GREENMODE, LutronOperation.EXECUTE, LutronCommandType.MODE,
-                getIntegrationId(), null, parameters));
+    protected void timeclock(Integer action, @Nullable Object parameter, @Nullable Boolean enable) {
+        sendCommand(new TimeclockCommand(LutronOperation.EXECUTE, getIntegrationId(), action, parameter, enable));
     }
 
-    protected void queryOutput(TargetType type, Object... parameters) {
-        sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.OUTPUT, getIntegrationId(), null,
-                parameters));
+    protected void queryTimeclock(Integer action) {
+        sendCommand(new TimeclockCommand(LutronOperation.QUERY, getIntegrationId(), action, null, null));
     }
 
-    protected void queryDevice(TargetType type, Object... parameters) {
-        sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.DEVICE, getIntegrationId(), null,
-                parameters));
+    protected void greenMode(Integer action, @Nullable Integer parameter) {
+        sendCommand(new ModeCommand(LutronOperation.EXECUTE, getIntegrationId(), action, parameter));
     }
 
-    protected void queryTimeclock(Object... parameters) {
-        sendCommand(new LutronCommand(TargetType.TIMECLOCK, LutronOperation.QUERY, LutronCommandType.TIMECLOCK,
-                getIntegrationId(), null, parameters));
+    protected void queryGreenMode(Integer action) {
+        sendCommand(new ModeCommand(LutronOperation.QUERY, getIntegrationId(), action, null));
     }
 
-    protected void queryGreenMode(Object... parameters) {
-        sendCommand(new LutronCommand(TargetType.GREENMODE, LutronOperation.QUERY, LutronCommandType.MODE,
-                getIntegrationId(), null, parameters));
-    }
-
-    protected void queryGroup(Object... parameters) {
-        sendCommand(new LutronCommand(TargetType.GROUP, LutronOperation.QUERY, LutronCommandType.GROUP,
-                getIntegrationId(), null, parameters));
+    protected void queryGroup(Integer action) {
+        sendCommand(new GroupCommand(LutronOperation.QUERY, getIntegrationId(), action, null));
     }
 }

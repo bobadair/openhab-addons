@@ -119,13 +119,13 @@ public class BlindHandler extends LutronHandler {
     private void handleLiftCommand(Command command) {
         if (command instanceof PercentType) {
             int level = ((PercentType) command).intValue();
-            output(TargetType.BLIND, LutronCommand.ACTION_LIFTLEVEL, level, 0);
+            output(TargetType.BLIND, LutronCommand.ACTION_LIFTLEVEL, level, null, null);
         } else if (command.equals(UpDownType.UP)) {
-            output(TargetType.BLIND, LutronCommand.ACTION_STARTRAISINGLIFT);
+            output(TargetType.BLIND, LutronCommand.ACTION_STARTRAISINGLIFT, null, null, null);
         } else if (command.equals(UpDownType.DOWN)) {
-            output(TargetType.BLIND, LutronCommand.ACTION_STARTLOWERINGLIFT);
+            output(TargetType.BLIND, LutronCommand.ACTION_STARTLOWERINGLIFT, null, null, null);
         } else if (command.equals(StopMoveType.STOP)) {
-            output(TargetType.BLIND, LutronCommand.ACTION_STOPLIFT);
+            output(TargetType.BLIND, LutronCommand.ACTION_STOPLIFT, null, null, null);
         } else if (command instanceof RefreshType) {
             queryOutput(TargetType.BLIND, LutronCommand.ACTION_LIFTLEVEL);
         }
@@ -134,13 +134,13 @@ public class BlindHandler extends LutronHandler {
     private void handleTiltCommand(Command command) {
         if (command instanceof PercentType) {
             int level = ((PercentType) command).intValue();
-            output(TargetType.BLIND, LutronCommand.ACTION_TILTLEVEL, Math.min(level, tiltMax), 0);
+            output(TargetType.BLIND, LutronCommand.ACTION_TILTLEVEL, Math.min(level, tiltMax), null, null);
         } else if (command.equals(UpDownType.UP)) {
-            output(TargetType.BLIND, LutronCommand.ACTION_STARTRAISINGTILT);
+            output(TargetType.BLIND, LutronCommand.ACTION_STARTRAISINGTILT, null, null, null);
         } else if (command.equals(UpDownType.DOWN)) {
-            output(TargetType.BLIND, LutronCommand.ACTION_STARTLOWERINGTILT);
+            output(TargetType.BLIND, LutronCommand.ACTION_STARTLOWERINGTILT, null, null, null);
         } else if (command.equals(StopMoveType.STOP)) {
-            output(TargetType.BLIND, LutronCommand.ACTION_STOPTILT);
+            output(TargetType.BLIND, LutronCommand.ACTION_STOPTILT, null, null, null);
         } else if (command instanceof RefreshType) {
             queryOutput(TargetType.BLIND, LutronCommand.ACTION_TILTLEVEL);
         }

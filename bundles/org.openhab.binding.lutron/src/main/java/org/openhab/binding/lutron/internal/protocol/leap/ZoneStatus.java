@@ -14,6 +14,8 @@ package org.openhab.binding.lutron.internal.protocol.leap;
 
 import java.util.regex.Pattern;
 
+import org.openhab.binding.lutron.internal.protocol.FanSpeedType;
+
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -30,6 +32,8 @@ public class ZoneStatus extends AbstractMessageBody {
     public int level; // 0-100
     @SerializedName("SwitchedLevel")
     public String switchedLevel = ""; // "On" or "Off"
+    @SerializedName("FanSpeed")
+    public FanSpeedType fanSpeed;
     @SerializedName("Zone")
     public Href zone = new Href();;
     @SerializedName("StatusAccuracy")

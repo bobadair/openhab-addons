@@ -70,12 +70,12 @@ import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.lutron.internal.config.LeapBridgeConfig;
 import org.openhab.binding.lutron.internal.discovery.LeapDeviceDiscoveryService;
+import org.openhab.binding.lutron.internal.protocol.FanSpeedType;
+import org.openhab.binding.lutron.internal.protocol.LutronCommandNew;
 import org.openhab.binding.lutron.internal.protocol.leap.AbstractMessageBody;
 import org.openhab.binding.lutron.internal.protocol.leap.Area;
 import org.openhab.binding.lutron.internal.protocol.leap.ButtonGroup;
-import org.openhab.binding.lutron.internal.protocol.leap.CommandType;
 import org.openhab.binding.lutron.internal.protocol.leap.Device;
-import org.openhab.binding.lutron.internal.protocol.leap.FanSpeedType;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
 import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroupStatus;
@@ -83,8 +83,6 @@ import org.openhab.binding.lutron.internal.protocol.leap.Request;
 import org.openhab.binding.lutron.internal.protocol.leap.ZoneStatus;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
-import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -610,7 +608,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     private void parseOneZoneStatus(JsonObject messageBody) {
         ZoneStatus zoneStatus = parseBodySingle(messageBody, "ZoneStatus", ZoneStatus.class);
         if (zoneStatus != null) {
-            handleZoneStatus(zoneStatus);
+            handleZoneUpdate(zoneStatus);
         }
     }
 
@@ -722,7 +720,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     /**
      * Notify child thing handler of a zonelevel update from a received zone status message.
      */
-    private void handleZoneStatus(ZoneStatus zoneStatus) {
+    private void handleZoneUpdate(ZoneStatus zoneStatus) {
         logger.trace("Zone: {} level: {}", zoneStatus.getZone(), zoneStatus.level);
         Integer integrationId = zoneToDevice(zoneStatus.getZone());
 
@@ -735,13 +733,27 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         // dispatch update to proper thing handler
         LutronHandler handler = findThingHandler(integrationId);
         if (handler != null) {
-            try {
-                handler.handleUpdate(LutronCommandType.OUTPUT, LutronCommand.ACTION_ZONELEVEL.toString(),
-                        new Integer(zoneStatus.level).toString());
-            } catch (NumberFormatException e) {
-                logger.warn("Number format exception parsing update");
-            } catch (RuntimeException e) {
-                logger.warn("Runtime exception while processing update");
+            if (zoneStatus.fanSpeed != null) {
+                // handle fan controller
+                FanSpeedType fanSpeed = zoneStatus.fanSpeed;
+                try {
+                    handler.handleUpdate(LutronCommandType.OUTPUT, LutronCommand.ACTION_ZONELEVEL.toString(),
+                            new Integer(fanSpeed.speed()).toString());
+                } catch (NumberFormatException e) {
+                    logger.warn("Number format exception parsing update");
+                } catch (RuntimeException e) {
+                    logger.warn("Runtime exception while processing update");
+                }
+            } else {
+                // handle switch/dimmer/shade
+                try {
+                    handler.handleUpdate(LutronCommandType.OUTPUT, LutronCommand.ACTION_ZONELEVEL.toString(),
+                            new Integer(zoneStatus.level).toString());
+                } catch (NumberFormatException e) {
+                    logger.warn("Number format exception parsing update");
+                } catch (RuntimeException e) {
+                    logger.warn("Runtime exception while processing update");
+                }
             }
         } else {
             logger.debug("No thing configured for integration ID {}", integrationId);
@@ -812,170 +824,28 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     }
 
     /**
-     * Queue a LEAP command for transmission by the sender thread.
+     * Queue a LeapCommand for transmission by the sender thread.
      */
-    public void sendCommand(LeapCommand command) {
-        sendQueue.add(command);
+    public void sendCommand(@Nullable LeapCommand command) {
+        if (command != null) {
+            sendQueue.add(command);
+        }
     }
 
     /**
-     * Receives commands from child things and translates them to LEAP commands
+     * Convert a LutronCommand into a LeapCommand and queue it for transmission by the sender thread.
      */
     @Override
-    public void sendCommand(LutronCommand command) {
-        logger.trace("Received request to send LIP command: {}", command);
-
-        if (command.getOperation() == LutronOperation.QUERY && command.getType() == LutronCommandType.OUTPUT) {
-            queryOutputToLeap(command);
-        } else if (command.getOperation() == LutronOperation.QUERY && command.getType() == LutronCommandType.GROUP) {
-            queryGroupToLeap(command);
-        } else if (command.getOperation() == LutronOperation.EXECUTE && command.getType() == LutronCommandType.OUTPUT) {
-            execOutputToLeap(command);
-        } else if (command.getOperation() == LutronOperation.EXECUTE && command.getType() == LutronCommandType.DEVICE) {
-            execDeviceToLeap(command);
-        } else {
-            logger.warn("Droping command: {}", command);
-        }
-        return;
-    }
-
-    /**
-     * Translates an query output LutronCommand (i.e. a LIP ?OUTPUT command) to LEAP protocol.
-     */
-    private void queryOutputToLeap(LutronCommand command) {
-        int action = command.getNumberParameter(0);
-
-        if (action == LutronCommand.ACTION_ZONELEVEL) {
-            Integer zone = deviceToZone(command.getIntegrationId());
-            if (zone != null) {
-                sendCommand(new LeapCommand(Request.getZoneStatus(zone)));
-            } else {
-                logger.debug("Dropping query output command for ID {}. No zone mapping available.",
-                        command.getIntegrationId());
-            }
-        }
-    }
-
-    /**
-     * Translates a query occupancy group LutronCommand (i.e. a LIP ?GROUP command) to LEAP protocol.
-     */
-    private void queryGroupToLeap(LutronCommand command) {
-        int action = command.getNumberParameter(0);
-
-        if (action == LutronCommand.ACTION_GROUPSTATE) {
-            // Get status for all occupancy groups because you can't query just one
-            sendCommand(new LeapCommand(Request.getOccupancyGroupStatus()));
-        }
-    }
-
-    /**
-     * Translates an execute output LutronCommand (i.e. a LIP #OUTPUT command) to LEAP protocol.
-     */
-    private void execOutputToLeap(LutronCommand command) {
-        int action = command.getNumberParameter(0);
-        Integer zone = deviceToZone(command.getIntegrationId());
-        int zoneInt;
-
-        if (zone == null) {
-            logger.debug("Dropping output command for ID {}. No zone mapping available.", command.getIntegrationId());
-            return;
-        } else {
-            zoneInt = zone;
-        }
-
-        if (command.targetType == TargetType.SWITCH || command.targetType == TargetType.DIMMER) {
-            if (action == LutronCommand.ACTION_ZONELEVEL) {
-                int value = command.getNumberParameter(1);
-                sendCommand(new LeapCommand(Request.goToLevel(zoneInt, value)));
-            } else {
-                logger.debug("Dropping unsupported switch action: {}", command);
-                return;
-            }
-        } else if (command.targetType == TargetType.SHADE) {
-            if (action == LutronCommand.ACTION_ZONELEVEL) {
-                int value = command.getNumberParameter(1);
-                sendCommand(new LeapCommand(Request.goToLevel(zoneInt, value)));
-            } else if (action == LutronCommand.ACTION_STARTRAISING) {
-                sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.RAISE)));
-            } else if (action == LutronCommand.ACTION_STARTLOWERING) {
-                sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.LOWER)));
-            } else if (action == LutronCommand.ACTION_STOP) {
-                sendCommand(new LeapCommand(Request.zoneCommand(zoneInt, CommandType.STOP)));
-            } else {
-                logger.debug("Dropping unsupported shade action: {}", command);
-                return;
-            }
-        } else if (command.targetType == TargetType.FAN) {
-            if (action == LutronCommand.ACTION_ZONELEVEL) {
-                int value = command.getNumberParameter(1);
-                if (value > 0) {
-                    sendCommand(new LeapCommand(Request.goToFanSpeed(zoneInt, FanSpeedType.HIGH)));
-                } else {
-                    sendCommand(new LeapCommand(Request.goToFanSpeed(zoneInt, FanSpeedType.OFF)));
-                }
-                // TODO: Add in other fan speeds
-            } else {
-                logger.debug("Dropping unsupported fan action: {}", command);
-            }
-        } else {
-            logger.debug("Dropping command for unsupported output: {}", command);
-        }
-    }
-
-    /**
-     * Translates an execute device LutronCommand (i.e. a LIP #DEVICE command) to LEAP protocol.
-     */
-    private void execDeviceToLeap(LutronCommand command) {
-        int id = command.getIntegrationId();
-        int component;
-        int action;
-
-        try {
-            component = command.getNumberParameter(0);
-            action = command.getNumberParameter(1);
-        } catch (IllegalArgumentException e) {
-            logger.debug("Ignoring device command. Invalid parameters.");
-            return;
-        }
-
-        if (command.targetType == TargetType.KEYPAD) {
-            int leapComponent;
-            if (command.getLeapComponent() != null) {
-                leapComponent = command.getLeapComponent();
-            } else {
-                logger.debug("Ignoring device command. No leap component in command.");
-                return;
-            }
-
-            if (action == LutronCommand.ACTION_PRESS) {
-                int button = getButton(id, leapComponent);
-                if (button > 0) {
-                    sendCommand(new LeapCommand(Request.buttonCommand(button, CommandType.PRESSANDHOLD)));
-                }
-            } else if (action == LutronCommand.ACTION_RELEASE) {
-                int button = getButton(id, leapComponent);
-                if (button > 0) {
-                    sendCommand(new LeapCommand(Request.buttonCommand(button, CommandType.RELEASE)));
-                }
-            } else {
-                logger.debug("Ignoring device command. Unsupported action.");
-            }
-        } else if (command.targetType == TargetType.VIRTUALKEYPAD) {
-            if (action == LutronCommand.ACTION_PRESS) {
-                sendCommand(new LeapCommand(Request.virtualButtonCommand(component, CommandType.PRESSANDRELEASE)));
-            } else if (action != LutronCommand.ACTION_RELEASE) {
-                logger.debug("Ignoring device command. Unsupported action.");
-            }
-        } else {
-            logger.debug("Ignoring device command. Unsupported target type.");
-        }
+    public void sendCommand(LutronCommandNew command) {
+        logger.trace("Received request to send Lutron command: {}", command);
+        sendCommand(command.leapCommand(this, deviceToZone(command.getIntegrationId())));
     }
 
     /**
      * Returns LEAP button number for given integrationID and component. Returns 0 if button number cannot be
      * determined.
      */
-    int getButton(int integrationID, int component) {
+    public int getButton(int integrationID, int component) {
         synchronized (deviceButtonMapLock) {
             if (deviceButtonMap != null) {
                 List<Integer> buttonList = deviceButtonMap.get(integrationID);
@@ -1010,7 +880,10 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         }
     }
 
-    private @Nullable Integer deviceToZone(int device) {
+    private @Nullable Integer deviceToZone(@Nullable Integer device) {
+        if (device == null) {
+            return null;
+        }
         synchronized (zoneMapsLock) {
             return deviceToZone.get(device);
         }

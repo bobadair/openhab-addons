@@ -97,7 +97,7 @@ public class TimeclockHandler extends LutronHandler {
         if (channelUID.getId().equals(CHANNEL_CLOCKMODE)) {
             if (command instanceof DecimalType) {
                 Integer mode = new Integer(((DecimalType) command).intValue());
-                timeclock(LutronCommand.ACTION_CLOCKMODE, mode);
+                timeclock(LutronCommand.ACTION_CLOCKMODE, mode, null);
             } else if (command instanceof RefreshType) {
                 queryTimeclock(LutronCommand.ACTION_CLOCKMODE);
             } else {
@@ -106,7 +106,7 @@ public class TimeclockHandler extends LutronHandler {
         } else if (channelUID.getId().equals(CHANNEL_EXECEVENT)) {
             if (command instanceof DecimalType) {
                 Integer index = new Integer(((DecimalType) command).intValue());
-                timeclock(LutronCommand.ACTION_EXECEVENT, index);
+                timeclock(LutronCommand.ACTION_EXECEVENT, index, null);
             } else {
                 logger.debug("Invalid command type for execevent channnel");
             }
@@ -125,14 +125,14 @@ public class TimeclockHandler extends LutronHandler {
         } else if (channelUID.getId().equals(CHANNEL_ENABLEEVENT)) {
             if (command instanceof DecimalType) {
                 Integer index = new Integer(((DecimalType) command).intValue());
-                timeclock(LutronCommand.ACTION_SETEVENT, index, LutronCommand.EVENT_ENABLE);
+                timeclock(LutronCommand.ACTION_SETEVENT, index, true);
             } else {
                 logger.debug("Invalid command type for enableevent channnel");
             }
         } else if (channelUID.getId().equals(CHANNEL_DISABLEEVENT)) {
             if (command instanceof DecimalType) {
                 Integer index = new Integer(((DecimalType) command).intValue());
-                timeclock(LutronCommand.ACTION_SETEVENT, index, LutronCommand.EVENT_DISABLE);
+                timeclock(LutronCommand.ACTION_SETEVENT, index, false);
             } else {
                 logger.debug("Invalid command type for disableevent channnel");
             }
