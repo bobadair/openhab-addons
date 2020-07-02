@@ -15,7 +15,7 @@ package org.openhab.binding.lutron.internal.handler;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
+import org.openhab.binding.lutron.internal.protocol.LutronCommandNew;
 
 /**
  * Abstract base class for Lutron bridge handlers
@@ -29,6 +29,7 @@ public abstract class LutronBridgeHandler extends BaseBridgeHandler {
         super(bridge);
     }
 
-    public abstract void sendCommand(LutronCommand command);
+    // public abstract void sendCommand(LutronCommand command);
 
+    public abstract void sendCommand(LutronCommandNew command);
 }
