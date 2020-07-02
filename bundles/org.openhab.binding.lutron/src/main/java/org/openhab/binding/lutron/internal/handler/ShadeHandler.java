@@ -103,22 +103,22 @@ public class ShadeHandler extends LutronHandler {
         if (channelUID.getId().equals(CHANNEL_SHADELEVEL)) {
             if (command instanceof PercentType) {
                 int level = ((PercentType) command).intValue();
-                output(TargetType.SHADE, LutronCommand.ACTION_ZONELEVEL, level, 0);
+                output(TargetType.SHADE, LutronCommand.ACTION_ZONELEVEL, level, "0", null);
                 // TODO: update channel state here?
             } else if (command.equals(UpDownType.UP)) {
-                output(TargetType.SHADE, LutronCommand.ACTION_STARTRAISING);
+                output(TargetType.SHADE, LutronCommand.ACTION_STARTRAISING, null, null, null);
                 if (leap) {
                     // LEAP won't send a position update
                     updateState(CHANNEL_SHADELEVEL, new PercentType(100));
                 }
             } else if (command.equals(UpDownType.DOWN)) {
-                output(TargetType.SHADE, LutronCommand.ACTION_STARTLOWERING);
+                output(TargetType.SHADE, LutronCommand.ACTION_STARTLOWERING, null, null, null);
                 if (leap) {
                     // LEAP won't send a position update
                     updateState(CHANNEL_SHADELEVEL, new PercentType(0));
                 }
             } else if (command.equals(StopMoveType.STOP)) {
-                output(TargetType.SHADE, LutronCommand.ACTION_STOP);
+                output(TargetType.SHADE, LutronCommand.ACTION_STOP, null, null, null);
             } else if (command instanceof RefreshType) {
                 queryOutput(TargetType.SHADE, LutronCommand.ACTION_ZONELEVEL);
             }

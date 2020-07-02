@@ -287,9 +287,9 @@ public abstract class BaseKeypadHandler extends LutronHandler {
                 queryDevice(commandTargetType, componentID, LutronCommand.ACTION_LED_STATE);
             } else if (command instanceof OnOffType) {
                 if (command == OnOffType.ON) {
-                    device(commandTargetType, componentID, LutronCommand.ACTION_LED_STATE, LutronCommand.LED_ON);
+                    device(commandTargetType, componentID, null, LutronCommand.ACTION_LED_STATE, LutronCommand.LED_ON);
                 } else if (command == OnOffType.OFF) {
-                    device(commandTargetType, componentID, LutronCommand.ACTION_LED_STATE, LutronCommand.LED_OFF);
+                    device(commandTargetType, componentID, null, LutronCommand.ACTION_LED_STATE, LutronCommand.LED_OFF);
                 }
             } else {
                 logger.warn("Invalid command {} received for channel {} device {}", command, channelUID,
@@ -304,12 +304,12 @@ public abstract class BaseKeypadHandler extends LutronHandler {
                 // Annotate commands with LEAP button number for LEAP bridge
                 Integer leapComponent = (this.leapButtonMap == null) ? null : leapButtonMap.get(componentID);
                 if (command == OnOffType.ON) {
-                    device(commandTargetType, leapComponent, componentID, LutronCommand.ACTION_PRESS);
+                    device(commandTargetType, componentID, leapComponent, LutronCommand.ACTION_PRESS, null);
                     if (autoRelease) {
-                        device(commandTargetType, leapComponent, componentID, LutronCommand.ACTION_RELEASE);
+                        device(commandTargetType, componentID, leapComponent, LutronCommand.ACTION_RELEASE, null);
                     }
                 } else if (command == OnOffType.OFF) {
-                    device(commandTargetType, leapComponent, componentID, LutronCommand.ACTION_RELEASE);
+                    device(commandTargetType, componentID, leapComponent, LutronCommand.ACTION_RELEASE, null);
                 }
             } else {
                 logger.warn("Invalid command type {} received for channel {} device {}", command, channelUID,

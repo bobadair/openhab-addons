@@ -52,6 +52,7 @@ public class LutronBindingConstants {
     public static final ThingTypeUID THING_TYPE_PALLADIOMKEYPAD = new ThingTypeUID(BINDING_ID, "palladiomkeypad");
     public static final ThingTypeUID THING_TYPE_WCI = new ThingTypeUID(BINDING_ID, "wci");
     public static final ThingTypeUID THING_TYPE_GROUP = new ThingTypeUID(BINDING_ID, "group");
+    public static final ThingTypeUID THING_TYPE_FAN = new ThingTypeUID(BINDING_ID, "fan");
 
     // List of all Channel ids
     public static final String CHANNEL_LIGHTLEVEL = "lightlevel";
@@ -68,6 +69,7 @@ public class LutronBindingConstants {
     public static final String CHANNEL_STEP = "step";
     public static final String CHANNEL_BLINDLIFTLEVEL = "blindliftlevel";
     public static final String CHANNEL_BLINDTILTLEVEL = "blindtiltlevel";
+    public static final String CHANNEL_FANSPEED = "fanspeed";
     public static final String CHANNEL_COMMAND = "command"; // For LEAP bridge debugging
 
     // Bridge config properties (used by discovery service)
