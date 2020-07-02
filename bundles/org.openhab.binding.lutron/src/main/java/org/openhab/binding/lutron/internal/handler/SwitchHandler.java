@@ -67,9 +67,8 @@ public class SwitchHandler extends LutronHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.UNKNOWN, ThingStatusDetail.NONE, "Awaiting initial response");
-            queryOutput(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL); // handleUpdate() will set thing status to
-                                                                            // online when
-            // response arrives
+            queryOutput(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL);
+            // handleUpdate() will set thing status to online when response arrives
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
@@ -79,9 +78,9 @@ public class SwitchHandler extends LutronHandler {
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (channelUID.getId().equals(CHANNEL_SWITCH)) {
             if (command.equals(OnOffType.ON)) {
-                output(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL, 100);
+                output(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL, 100, null, null);
             } else if (command.equals(OnOffType.OFF)) {
-                output(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL, 0);
+                output(TargetType.SWITCH, LutronCommand.ACTION_ZONELEVEL, 0, null, null);
             }
         }
     }
