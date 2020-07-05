@@ -15,6 +15,8 @@ package org.openhab.binding.lutron.internal.protocol.leap;
 import com.google.gson.annotations.SerializedName;
 
 /**
+ * TODO: Referenced from Area but can be removed if unused
+ *
  * @author Bob Adair - Initial contribution
  */
 public class Category {
