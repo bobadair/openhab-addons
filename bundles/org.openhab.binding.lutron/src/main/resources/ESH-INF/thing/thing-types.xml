@@ -181,7 +181,7 @@
 
 		<channels>
 			<channel id="fanspeed" typeId="fanControl"/>
-			<channel id="lightlevel" typeId="lightDimmer"/>
+			<channel id="fanlevel" typeId="lightDimmer"/>
 		</channels>
 
 		<config-description>
