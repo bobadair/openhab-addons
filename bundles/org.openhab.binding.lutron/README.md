@@ -26,8 +26,9 @@ This binding currently supports the following thing types:
 
 * **ipbridge** - The Lutron main repeater/processor/hub
 * **leapbridge** - Experimental bridge that uses LEAP protocol
-* **dimmer** - Dimmer or fan controller
+* **dimmer** - Light dimmer
 * **switch** - Switch or relay module
+* **fan** - Fan controller
 * **occupancysensor** - Occupancy/vacancy sensor
 * **group** - Occupancy group
 * **keypad** - Lutron seeTouch or Hybrid seeTouch Keypad
@@ -144,6 +145,7 @@ These are used for ON and OFF commands, respectively, and default to 1 second if
 Commands using a specific percent value will use a default fade time of 0.25 seconds.
 
 A **dimmer** thing has a single channel *lightlevel* with type Dimmer and category DimmableLight.
+The **dimmer** thing was previously also used to control fan speed controllers, but now you should use the **fan** thing instead.
 
 Thing configuration file example:
 
@@ -173,6 +175,18 @@ Thing configuration file example:
 
 ```
 Thing switch porch [ integrationId=8 ]
+```
+
+### Fans
+
+Fan speed controllers are interfaced with using the **fan** thing.
+It accepts no additional parameters besides `integrationId`.
+A **fan** thing has two channels, *fanspeed* and *fanlevel*.
+
+Thing configuration file example:
+
+```
+Thing fan porchfan [ integrationId=12 ]
 ```
 
 ### Occupancy Sensors
@@ -616,6 +630,8 @@ The following is a summary of channels for all RadioRA 2 binding things:
 |---------------------|-------------------|---------------|--------------------------------------------- |
 | dimmer              | lightlevel        | Dimmer        | Increase/decrease the light level            |
 | switch              | switchstatus      | Switch        | On/off status of the switch                  |
+| fan                 | fanspeed          | String        | Set/get fan speed using string options       |
+| fan                 | fanlevel          | Dimmer        | Set/get fan speed using a dimmer channel     |
 | occupancysensor     | occupancystatus   | Switch        | Occupancy sensor status                      |
 | group               | groupstate        | String        | Occupancy group status                       |
 | cco                 | switchstatus      | Switch        | On/off status of the CCO                     |
@@ -643,8 +659,10 @@ Appropriate channels will be created automatically by the keypad, ttkeypad, intl
 |-----------|---------------|--------------|-------------------------------------------------------|
 |dimmer     |lightlevel     |PercentType   |OnOffType, PercentType (rounded/truncated to integer)  |
 |switch     |switchstatus   |OnOffType     |OnOffType                                              |
+|fan        |fanspeed       |StringType    |"OFF","LOW","MEDIUM","MEDIUMHIGH","HIGH"               |
+|fan        |fanlevel       |PercentType   |OnOffType, PercentType                                 |
 |occ. sensor|occupancystatus|OnOffType     |(*readonly*)                                           |
-|group      |groupstate     |StringType    |(*readonly*)                                           |
+|group      |groupstate     |StringType    |"OCCUPIED","UNOCCUPIED","UNKNOWN" (*readonly*)         |
 |cco        |switchstatus   |OnOffType     |OnOffType, RefreshType                                 |
 |keypads    |button*        |OnOffType     |OnOffType                                              |
 |           |led*           |OnOffType     |OnOffType, RefreshType                                 |
