@@ -90,7 +90,7 @@ public class FanHandler extends LutronHandler {
 
     @Override
     public void channelLinked(ChannelUID channelUID) {
-        if (channelUID.getId().equals(CHANNEL_FANSPEED) || channelUID.getId().equals(CHANNEL_LIGHTLEVEL)) {
+        if (channelUID.getId().equals(CHANNEL_FANSPEED) || channelUID.getId().equals(CHANNEL_FANLEVEL)) {
             // Refresh state when new item is linked.
             queryOutput(TargetType.FAN, LutronCommand.ACTION_ZONELEVEL);
         }
@@ -98,7 +98,7 @@ public class FanHandler extends LutronHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (channelUID.getId().equals(CHANNEL_LIGHTLEVEL)) {
+        if (channelUID.getId().equals(CHANNEL_FANLEVEL)) {
             if (command instanceof Number) {
                 int level = ((Number) command).intValue();
                 FanSpeedType speed = FanSpeedType.toFanSpeedType(level);
@@ -131,7 +131,7 @@ public class FanHandler extends LutronHandler {
             if (getThing().getStatus() == ThingStatus.UNKNOWN) {
                 updateStatus(ThingStatus.ONLINE);
             }
-            updateState(CHANNEL_LIGHTLEVEL, new PercentType(level));
+            updateState(CHANNEL_FANLEVEL, new PercentType(level));
             FanSpeedType fanSpeed = FanSpeedType.toFanSpeedType(level.intValue());
             updateState(CHANNEL_FANSPEED, new StringType(fanSpeed.toString()));
         }

@@ -43,7 +43,7 @@ public class Request {
                 + "\"Header\": {\"Url\": \"/zone/%d/commandprocessor\"}," + "\"Body\": {"
                 + "\"Command\": {\"CommandType\": \"GoToFanSpeed\","
                 + "\"FanSpeedParameters\": {\"FanSpeed\": \"%s\"}}}}";
-        return String.format(request, zone, fanSpeed.toString());
+        return String.format(request, zone, fanSpeed.leapValue());
     }
 
     public static String buttonCommand(int button, CommandType command) {

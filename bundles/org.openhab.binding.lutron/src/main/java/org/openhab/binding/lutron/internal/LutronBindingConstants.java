@@ -72,6 +72,7 @@ public class LutronBindingConstants {
     public static final String CHANNEL_BLINDTILTLEVEL = "blindtiltlevel";
     public static final String CHANNEL_VARSTATE = "varstate";
     public static final String CHANNEL_FANSPEED = "fanspeed";
+    public static final String CHANNEL_FANLEVEL = "fanlevel";
     public static final String CHANNEL_COMMAND = "command"; // For LEAP bridge debugging
 
     // Bridge config properties (used by discovery service)
