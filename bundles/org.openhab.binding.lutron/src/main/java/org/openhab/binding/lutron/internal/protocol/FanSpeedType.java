@@ -53,6 +53,11 @@ public enum FanSpeedType {
         return leapValue;
     }
 
+    @Override
+    public String toString() {
+        return leapValue;
+    }
+
     public static FanSpeedType toFanSpeedType(int percentage) {
         if (percentage == OFF.speed) {
             return FanSpeedType.OFF;
