@@ -87,9 +87,11 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                                 notifyDiscovery(THING_TYPE_DIMMER, deviceId, label);
                                 break;
                             case "WallSwitch":
+                            case "PlugInSwitch":
                                 notifyDiscovery(THING_TYPE_SWITCH, deviceId, label);
                                 break;
                             case "CasetaFanSpeedController":
+                            case "MaestroFanSpeedController":
                                 notifyDiscovery(THING_TYPE_FAN, deviceId, label);
                                 break;
                             case "Pico2Button":
