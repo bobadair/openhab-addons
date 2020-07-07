@@ -16,29 +16,19 @@ import static org.openhab.binding.lutron.internal.LutronBindingConstants.*;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.security.KeyFactory;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +45,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -96,8 +85,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 /**
- * Bridge handler responsible for communicating with Lutron hubs using LEAP protocol, such as Caseta and RA2 Select.
- * This is an experimental testbed for LEAP communications and should not be used in production.
+ * Bridge handler responsible for communicating with Lutron hubs using the LEAP protocol, such as Caseta and RA2 Select.
  *
  * @author Bob Adair - Initial contribution
  */
@@ -106,9 +94,6 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     private static final int DEFAULT_RECONNECT_MINUTES = 5;
     private static final int DEFAULT_HEARTBEAT_MINUTES = 5;
     private static final long KEEPALIVE_TIMEOUT_SECONDS = 30;
-
-    private static final String TEST_DATA_FILE = ""; // "C:\\Users\\Bob\\Documents\\leapdata.json";
-    private static final String TEST_OUTPUT_FILE = ""; // "C:\\Users\\Bob\\Documents\\leapdata.out";
 
     private static final String STATUS_INITIALIZING = "Initializing";
 
@@ -146,7 +131,6 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     private final Map<Integer, LutronHandler> childHandlerMap = new ConcurrentHashMap<>();
     private final Map<Integer, GroupHandler> groupHandlerMap = new ConcurrentHashMap<>();
 
-    // private @Nullable Date lastDbUpdateDate;
     private @Nullable LeapDeviceDiscoveryService discoveryService;
 
     public void setDiscoveryService(LeapDeviceDiscoveryService discoveryService) {
@@ -156,37 +140,8 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     public LeapBridgeHandler(Bridge bridge) {
         super(bridge);
         gson = new GsonBuilder()
-                // .registerTypeAdapter(Id.class, new IdTypeAdapter())
-                // .enableComplexMapKeySerialization()
-                // .setDateFormat(DateFormat.LONG)
                 // .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
                 .create();
-    }
-
-    private void loadCertFromFile(String fileName, KeyStore keystore, String alias)
-            throws CertificateException, FileNotFoundException, KeyStoreException {
-        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-        FileInputStream certStream = new FileInputStream(fileName);
-
-        Collection<? extends java.security.cert.Certificate> certCollection = certFactory
-                .generateCertificates(certStream);
-        Iterator<? extends java.security.cert.Certificate> i = certCollection.iterator();
-        while (i.hasNext()) {
-            java.security.cert.Certificate cert = i.next();
-            logger.trace("Loaded certificate: {}", cert);
-            keystore.setCertificateEntry(alias, cert);
-        }
-    }
-
-    private void loadKeyFromFile(String fileName, KeyStore keystore, String alias)
-            throws NoSuchAlgorithmException, FileNotFoundException, IOException, InvalidKeySpecException {
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        FileInputStream keyStream = new FileInputStream(fileName);
-        byte[] keyBytes = IOUtils.toByteArray(keyStream);
-        keyStream.close();
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-        PrivateKey key = keyFactory.generatePrivate(spec);
-        // keystore.setKeyEntry(alias, key, null, chain);
     }
 
     @Override
@@ -204,61 +159,47 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         heartbeatInterval = (config.heartbeat > 0) ? config.heartbeat : DEFAULT_HEARTBEAT_MINUTES;
         sendDelay = (config.delay < 0) ? 0 : config.delay;
 
-        if (TEST_DATA_FILE.isEmpty()) {
-            try {
-                logger.trace("Initializing keystore");
-                // Create keystore
-                // KeyStore keystore = KeyStore.getInstance("JKS");
-                KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+        try {
+            logger.trace("Initializing keystore");
+            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 
-                if (config.keystore != null) {
-                    // Load keystore from keystore file
-                    keystore.load(new FileInputStream(config.keystore), config.keystorePassword.toCharArray());
-                } else if (config.clientCert != null && config.clientKey != null && config.bridgeCert != null) {
-                    // Creat empty keystore and load key and certificates
-                    keystore.load(null, null);
-                    // loadCertFromFile(config.clientCert, keystore, "caseta");
-                    // loadKeyFromFile(config.clientKey, keystore, "caseta");
-                    // loadCertFromFile(config.bridgeCert, keystore, "caseta-bridge");
-                } else {
-                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                            "Neither keystore nor key files configured");
-                    return;
-                }
-
-                logger.trace("Initializing SSL Context");
-                // KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509"); // X509 not available
-                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                kmf.init(keystore, config.keystorePassword.toCharArray());
-
-                // TrustManagerFactory tmf = TrustManagerFactory.getInstance("X509");
-                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                tmf.init(keystore);
-
-                sslContext = SSLContext.getInstance("TLS");
-                TrustManager[] trustManagers = tmf.getTrustManagers();
-                sslContext.init(kmf.getKeyManagers(), trustManagers, null);
-
-                sslsocketfactory = sslContext.getSocketFactory();
-            } catch (FileNotFoundException e) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "File not found");
-                return;
-            } catch (CertificateException e) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Certificate exception");
-                return;
-            } catch (UnrecoverableKeyException e) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                        "Key unrecoverable with supplied password");
-                return;
-            } catch (KeyManagementException e) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Key management exception");
-                logger.warn("Key management exception", e);
-                return;
-            } catch (KeyStoreException | NoSuchAlgorithmException | IOException e) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Error initializing keystore");
-                logger.warn("Error initializing keystore", e);
+            if (config.keystore != null) {
+                keystore.load(new FileInputStream(config.keystore), config.keystorePassword.toCharArray());
+            } else {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Keystore not configured");
                 return;
             }
+
+            logger.trace("Initializing SSL Context");
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(keystore, config.keystorePassword.toCharArray());
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(keystore);
+
+            sslContext = SSLContext.getInstance("TLS");
+            TrustManager[] trustManagers = tmf.getTrustManagers();
+            sslContext.init(kmf.getKeyManagers(), trustManagers, null);
+
+            sslsocketfactory = sslContext.getSocketFactory();
+        } catch (FileNotFoundException e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "File not found");
+            return;
+        } catch (CertificateException e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Certificate exception");
+            return;
+        } catch (UnrecoverableKeyException e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                    "Key unrecoverable with supplied password");
+            return;
+        } catch (KeyManagementException e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Key management exception");
+            logger.warn("Key management exception", e);
+            return;
+        } catch (KeyStoreException | NoSuchAlgorithmException | IOException e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Error initializing keystore");
+            logger.warn("Error initializing keystore", e);
+            return;
         }
 
         childHandlerMap.clear(); // TODO: Should these be here or in the constructor?
@@ -269,40 +210,25 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     }
 
     private synchronized void connect() {
-        if (!TEST_DATA_FILE.isEmpty()) {
-            // Open test data files instead of socket
-            File testData = new File(TEST_DATA_FILE);
-            File testOutput = new File(TEST_OUTPUT_FILE);
-
-            try {
-                reader = Files.newBufferedReader(testData.toPath(), StandardCharsets.UTF_8);
-                writer = Files.newBufferedWriter(testOutput.toPath(), StandardCharsets.UTF_8);
-            } catch (IOException | SecurityException e) {
-                logger.debug("Exception opening test data files {} : {}", TEST_DATA_FILE, e.getMessage());
-            }
-        } else {
-            // Open SSL connection to bridge
-            try {
-                logger.debug("Opening SSL connection to {}:{}", config.ipAddress, config.port);
-                SSLSocket sslsocket = (SSLSocket) sslsocketfactory.createSocket(config.ipAddress, config.port);
-                sslsocket.startHandshake();
-                writer = new BufferedWriter(new OutputStreamWriter(sslsocket.getOutputStream()));
-                reader = new BufferedReader(new InputStreamReader(sslsocket.getInputStream()));
-                this.sslsocket = sslsocket;
-            } catch (UnknownHostException e) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Unknown host");
-                return;
-            } catch (IOException e) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                        "IO error opening SSL connection");
-                disconnect();
-                scheduleConnectRetry(reconnectInterval); // Possibly a temporary problem. Try again later.
-                return;
-            } catch (IllegalArgumentException e) {
-                // port out of valid range
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Invalid port number");
-                return;
-            }
+        try {
+            logger.debug("Opening SSL connection to {}:{}", config.ipAddress, config.port);
+            SSLSocket sslsocket = (SSLSocket) sslsocketfactory.createSocket(config.ipAddress, config.port);
+            sslsocket.startHandshake();
+            writer = new BufferedWriter(new OutputStreamWriter(sslsocket.getOutputStream()));
+            reader = new BufferedReader(new InputStreamReader(sslsocket.getInputStream()));
+            this.sslsocket = sslsocket;
+        } catch (UnknownHostException e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Unknown host");
+            return;
+        } catch (IOException e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "IO error opening SSL connection");
+            disconnect();
+            scheduleConnectRetry(reconnectInterval); // Possibly a temporary problem. Try again later.
+            return;
+        } catch (IllegalArgumentException e) {
+            // port out of valid range
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Invalid port number");
+            return;
         }
 
         updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, STATUS_INITIALIZING);
@@ -335,6 +261,9 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
 
     private synchronized void disconnect() {
         logger.debug("Disconnecting");
+
+        Thread senderThread = this.senderThread;
+        Thread readerThread = this.readerThread;
 
         if (connectRetryJob != null) {
             connectRetryJob.cancel(true);
@@ -904,6 +833,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
 
     private void reconnectTaskCancel(boolean interrupt) {
         synchronized (keepAliveReconnectLock) {
+            ScheduledFuture<?> keepAliveReconnect = this.keepAliveReconnect;
             if (keepAliveReconnect != null) {
                 logger.trace("Canceling scheduled reconnect job.");
                 keepAliveReconnect.cancel(interrupt);
