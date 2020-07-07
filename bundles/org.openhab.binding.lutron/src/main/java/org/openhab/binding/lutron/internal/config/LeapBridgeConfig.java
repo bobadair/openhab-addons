@@ -22,18 +22,18 @@ public class LeapBridgeConfig {
     public int port = 8081;
     public String keystore;
     public String keystorePassword;
-    public String clientKey;
-    public String clientCert;
-    public String bridgeCert;
-    public String keyPassword;
+    // public String clientKey;
+    // public String clientCert;
+    // public String bridgeCert;
+    // public String keyPassword;
     public String discoveryFile;
     public int reconnect;
     public int heartbeat;
     public int delay = 0;
 
-    public boolean sameConnectionParameters(LeapBridgeConfig config) {
-        // return StringUtils.equals(ipAddress, config.ipAddress) && (reconnect == config.reconnect)
-        // && (heartbeat == config.heartbeat) && (delay == config.delay);
-        return true;
-    }
+    // public boolean sameConnectionParameters(LeapBridgeConfig config) {
+    // // return StringUtils.equals(ipAddress, config.ipAddress) && (reconnect == config.reconnect)
+    // // && (heartbeat == config.heartbeat) && (delay == config.delay);
+    // return true;
+    // }
 }
