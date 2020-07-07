@@ -69,6 +69,8 @@
 			<property name="vendor">Lutron</property>
 		</properties>
 
+		<representation-property>serialNumber</representation-property>
+
 		<config-description>
 			<parameter name="ipAddress" type="text" required="true">
 				<context>network-address</context>
@@ -185,6 +187,8 @@
 			<channel id="fanspeed" typeId="fanControl"/>
 			<channel id="fanlevel" typeId="lightDimmer"/>
 		</channels>
+
+		<representation-property>integrationId</representation-property>
 
 		<config-description>
 			<parameter name="integrationId" type="integer" required="true">
@@ -393,6 +397,8 @@
 		<channels>
 			<channel id="groupstate" typeId="groupState"/>
 		</channels>
+
+		<representation-property>integrationId</representation-property>
 
 		<config-description>
 			<parameter name="integrationId" type="integer" required="true">
