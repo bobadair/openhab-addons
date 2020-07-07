@@ -120,11 +120,15 @@ You should also be aware that LEAP and LIP integration IDs for the same device c
 
 For additional information on LEAP and instructions on configuring authentication for leapbridge, see the [Leap Notes](doc/leapnotes.md) document.
 
+The `ipAddress`, `keystore` and `keystorePassword` parameters must be set.
+The optional `port` parameter defaults to 8081 and should not normally need to be changed.
 The optional advanced parameter `heartbeat` can be used to set the interval between connection keepalive heartbeat messages, in minutes.
 It defaults to 5.
 Note that the handler will wait up to 30 seconds for a heartbeat response before attempting to reconnect.
 The optional advanced parameter `reconnect` can be used to set the connection retry interval, in minutes.
 It also defaults to 5.
+The optional advanced parameter `delay` can be used to set a delay (in milliseconds) between transmission of LEAP commands to the bridge device.
+It should not normally need to be changed.
 
 Thing configuration file example:
 
