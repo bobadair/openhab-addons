@@ -28,10 +28,10 @@ public class OccupancyGroup extends AbstractMessageBody {
     public String href;
 
     @SerializedName("AssociatedSensors")
-    public OccupancySensor[] AssociatedSensors;
+    public OccupancySensor[] associatedSensors;
 
     @SerializedName("AssociatedAreas")
-    public Area[] AssociatedAreas; // TODO: This may not work
+    public Area[] associatedAreas; // TODO: Verify this works
 
     @SerializedName("ProgrammingType")
     public String programmingType;
