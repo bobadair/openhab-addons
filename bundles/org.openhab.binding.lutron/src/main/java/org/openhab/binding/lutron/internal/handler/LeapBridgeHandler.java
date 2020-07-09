@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -128,6 +129,9 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     private @Nullable Map<Integer, List<Integer>> deviceButtonMap;
     private final Object deviceButtonMapLock = new Object();
 
+    private final AtomicBoolean deviceDataLoaded = new AtomicBoolean(false);
+    private final AtomicBoolean buttonDataLoaded = new AtomicBoolean(false);
+
     private final Map<Integer, LutronHandler> childHandlerMap = new ConcurrentHashMap<>();
     private final Map<Integer, GroupHandler> groupHandlerMap = new ConcurrentHashMap<>();
 
@@ -210,6 +214,9 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     }
 
     private synchronized void connect() {
+        deviceDataLoaded.set(false);
+        buttonDataLoaded.set(false);
+
         try {
             logger.debug("Opening SSL connection to {}:{}", config.ipAddress, config.port);
             SSLSocket sslsocket = (SSLSocket) sslsocketfactory.createSocket(config.ipAddress, config.port);
@@ -303,6 +310,9 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
                 logger.debug("Error closing writer: {}", e.getMessage());
             }
         }
+
+        deviceDataLoaded.set(false);
+        buttonDataLoaded.set(false);
     }
 
     private synchronized void reconnect() {
@@ -547,9 +557,9 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     private void parseMultipleAreaDefinition(JsonObject messageBody) {
         logger.trace("Parsing area list");
         List<Area> areaList = parseBodyMultiple(messageBody, "Areas", Area.class);
-        for (Area area : areaList) {
-            logger.debug("Area name: {} href: {}", area.name, area.href);
-            // TODO: Record area info
+
+        if (discoveryService != null) {
+            discoveryService.setAreas(areaList);
         }
     }
 
@@ -558,13 +568,10 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
      */
     private void parseMultipleOccupancyGroupDefinition(JsonObject messageBody) {
         logger.trace("Parsing occupancy group list");
-        List<OccupancyGroup> occuGroupList = parseBodyMultiple(messageBody, "OccupancyGroups", OccupancyGroup.class);
-        for (OccupancyGroup occuGroup : occuGroupList) {
-            logger.debug("OccupancyGroup: {}", occuGroup.href);
-            // TODO: Record any necessary occupancy group info
-            if (occuGroup.AssociatedSensors != null && discoveryService != null) {
-                discoveryService.processOccupancyGroup(occuGroup);
-            }
+        List<OccupancyGroup> oGroupList = parseBodyMultiple(messageBody, "OccupancyGroups", OccupancyGroup.class);
+
+        if (discoveryService != null) {
+            discoveryService.setOccupancyGroups(oGroupList);
         }
     }
 
@@ -590,6 +597,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
      */
     private void parseMultipleDeviceDefinition(JsonObject messageBody) {
         List<Device> deviceList = parseBodyMultiple(messageBody, "Devices", Device.class);
+
         synchronized (zoneMapsLock) {
             zoneToDevice.clear();
             deviceToZone.clear();
@@ -597,7 +605,6 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
                 Integer zoneid = device.getZone();
                 Integer deviceid = device.getDevice();
                 logger.debug("Found device: {} id: {} zone: {}", device.name, deviceid, zoneid);
-                // TODO: Maintain device type info
                 if (zoneid > 0 && deviceid > 0) {
                     zoneToDevice.put(zoneid, deviceid);
                     deviceToZone.put(deviceid, zoneid);
@@ -607,24 +614,11 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
                 }
             }
         }
-        checkInitialized();// TODO: Move this?
+        deviceDataLoaded.set(true);
+        checkInitialized();
 
         if (discoveryService != null) {
-            discoveryService.processMultipleDeviceDefinition(messageBody);// TODO: change to pass Device list
-        }
-    }
-
-    /**
-     * Set state to online if offline/initializing and all initialization info is loaded.
-     */
-    private void checkInitialized() {
-        ThingStatusInfo statusInfo = getThing().getStatusInfo();
-        if (statusInfo.getStatus() == ThingStatus.OFFLINE && STATUS_INITIALIZING.equals(statusInfo.getDescription())) {
-            // if (devicesLoaded && areasLoaded && zonesLoaded) {
-            // updateStatus(ThingStatus.ONLINE);
-            //
-            // }
-            updateStatus(ThingStatus.ONLINE); // TODO: Remove
+            discoveryService.processDeviceDefinitions(deviceList);
         }
     }
 
@@ -643,6 +637,21 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         }
         synchronized (deviceButtonMapLock) {
             this.deviceButtonMap = deviceButtonMap;
+            buttonDataLoaded.set(true);
+        }
+        checkInitialized();
+    }
+
+    /**
+     * Set state to online if offline/initializing and all required initialization info is loaded.
+     * Currently this means device (zone) and button group data.
+     */
+    private void checkInitialized() {
+        ThingStatusInfo statusInfo = getThing().getStatusInfo();
+        if (statusInfo.getStatus() == ThingStatus.OFFLINE && STATUS_INITIALIZING.equals(statusInfo.getDescription())) {
+            if (deviceDataLoaded.get() && buttonDataLoaded.get()) {
+                updateStatus(ThingStatus.ONLINE);
+            }
         }
     }
 

@@ -31,7 +31,7 @@ public class OccupancyGroup extends AbstractMessageBody {
     public OccupancySensor[] AssociatedSensors;
 
     @SerializedName("AssociatedAreas")
-    public Area[] AssociatedAreas; // TODO: This may not work
+    public Area[] AssociatedAreas; // TODO: Verify this works
 
     @SerializedName("ProgrammingType")
     public String programmingType;

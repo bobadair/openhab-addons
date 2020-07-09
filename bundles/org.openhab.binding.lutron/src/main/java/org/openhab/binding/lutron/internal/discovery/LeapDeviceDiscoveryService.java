@@ -16,6 +16,7 @@ package org.openhab.binding.lutron.internal.discovery;
 import static org.openhab.binding.lutron.internal.LutronBindingConstants.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -27,17 +28,11 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.lutron.internal.LutronHandlerFactory;
 import org.openhab.binding.lutron.internal.handler.LeapBridgeHandler;
+import org.openhab.binding.lutron.internal.protocol.leap.Area;
 import org.openhab.binding.lutron.internal.protocol.leap.Device;
 import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 
 /**
  * The {@link LeapDeviceDiscoveryService} discovers devices paired with Lutron bridges using the LEAP protocol, such as
@@ -52,85 +47,118 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
 
     private final Logger logger = LoggerFactory.getLogger(LeapDeviceDiscoveryService.class);
 
-    private final Gson gson;
+    private @Nullable Map<String, String> areaMap;
+    private @Nullable List<OccupancyGroup> oGroupList;
+
+    // private final Gson gson;
     private final LeapBridgeHandler bridgeHandler;
 
     public LeapDeviceDiscoveryService(LeapBridgeHandler bridgeHandler) throws IllegalArgumentException {
         super(LutronHandlerFactory.DISCOVERABLE_DEVICE_TYPES_UIDS, DISCOVERY_SERVICE_TIMEOUT);
         this.bridgeHandler = bridgeHandler;
-        gson = new GsonBuilder().create();
+        // gson = new GsonBuilder().create();
     }
 
     @Override
     protected void startScan() {
-        // TODO: Query bridge
+        // TODO: Query bridge for devices, areas, occupancy groups
     }
 
-    public void processMultipleDeviceDefinition(JsonObject messageBody) {
-        try {
-            JsonArray devices = messageBody.get("Devices").getAsJsonArray();
-            for (JsonElement element : devices) {
-                JsonObject jsonDeviceObj = element.getAsJsonObject();
-                Device device = gson.fromJson(jsonDeviceObj, Device.class);
-                // Integer zoneid = device.getZone();
-                Integer deviceId = device.getDevice();
-                String label = device.getFullyQualifiedName();
-                if (deviceId > 0) {
-                    logger.trace("Discovered device: {} type: {} id: {}", label, device.deviceType, deviceId);
-                    if (device.deviceType != null) {
-                        switch (device.deviceType) {
-                            case "SmartBridge":
-                                notifyDiscovery(THING_TYPE_VIRTUALKEYPAD, deviceId, label, "model", "Caseta");
-                                break;
-                            case "WallDimmer":
-                            case "PlugInDimmer":
-                                notifyDiscovery(THING_TYPE_DIMMER, deviceId, label);
-                                break;
-                            case "WallSwitch":
-                            case "PlugInSwitch":
-                                notifyDiscovery(THING_TYPE_SWITCH, deviceId, label);
-                                break;
-                            case "CasetaFanSpeedController":
-                            case "MaestroFanSpeedController":
-                                notifyDiscovery(THING_TYPE_FAN, deviceId, label);
-                                break;
-                            case "Pico2Button":
-                                notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "2B");
-                                break;
-                            case "Pico2ButtonRaiseLower":
-                                notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "2BRL");
-                                break;
-                            case "Pico3ButtonRaiseLower":
-                                notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "3BRL");
-                                break;
-                            case "SerenaRollerShade":
-                            case "SerenaHoneycombShade":
-                            case "TriathlonRollerShade":
-                            case "TriathlonHoneycombShade":
-                            case "QsWirelessShade":
-                                notifyDiscovery(THING_TYPE_SHADE, deviceId, label);
-                                break;
-                            case "RPSOccupancySensor":
-                                notifyDiscovery(THING_TYPE_OCCUPANCYSENSOR, deviceId, label);
-                                break;
-                            default:
-                                logger.info("Unrecognized device type: {}", device.deviceType);
-                                break;
-                        }
+    public void processDeviceDefinitions(List<Device> deviceList) {
+        for (Device device : deviceList) {
+            // Integer zoneid = device.getZone();
+            Integer deviceId = device.getDevice();
+            String label = device.getFullyQualifiedName();
+            if (deviceId > 0) {
+                logger.trace("Discovered device: {} type: {} id: {}", label, device.deviceType, deviceId);
+                if (device.deviceType != null) {
+                    switch (device.deviceType) {
+                        case "SmartBridge":
+                            notifyDiscovery(THING_TYPE_VIRTUALKEYPAD, deviceId, label, "model", "Caseta");
+                            break;
+                        case "WallDimmer":
+                        case "PlugInDimmer":
+                            notifyDiscovery(THING_TYPE_DIMMER, deviceId, label);
+                            break;
+                        case "WallSwitch":
+                        case "PlugInSwitch":
+                            notifyDiscovery(THING_TYPE_SWITCH, deviceId, label);
+                            break;
+                        case "CasetaFanSpeedController":
+                        case "MaestroFanSpeedController":
+                            notifyDiscovery(THING_TYPE_FAN, deviceId, label);
+                            break;
+                        case "Pico2Button":
+                            notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "2B");
+                            break;
+                        case "Pico2ButtonRaiseLower":
+                            notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "2BRL");
+                            break;
+                        case "Pico3ButtonRaiseLower":
+                            notifyDiscovery(THING_TYPE_PICO, deviceId, label, "model", "3BRL");
+                            break;
+                        case "SerenaRollerShade":
+                        case "SerenaHoneycombShade":
+                        case "TriathlonRollerShade":
+                        case "TriathlonHoneycombShade":
+                        case "QsWirelessShade":
+                            notifyDiscovery(THING_TYPE_SHADE, deviceId, label);
+                            break;
+                        case "RPSOccupancySensor":
+                            notifyDiscovery(THING_TYPE_OCCUPANCYSENSOR, deviceId, label);
+                            break;
+                        default:
+                            logger.info("Unrecognized device type: {}", device.deviceType);
+                            break;
                     }
                 }
             }
-        } catch (IllegalStateException | JsonSyntaxException e) {
-            logger.debug("Exception parsing device definitions: {}", e.getMessage());
         }
     }
 
-    public void processOccupancyGroup(OccupancyGroup occuGroup) {
-        // TODO: Get Area name to use a label
-        // TODO: Ignore if already processed
-        int groupNum = occuGroup.getOccupancyGroup();
-        if (groupNum > 0 && occuGroup.AssociatedSensors != null) {
-            notifyDiscovery(THING_TYPE_GROUP, groupNum, "Occupancy Group");
+    private void processOccupancyGroups() {
+        Map<String, String> areaMap = this.areaMap;
+        List<OccupancyGroup> oGroupList = this.oGroupList;
+
+        if (areaMap != null && oGroupList != null) {
+            for (OccupancyGroup oGroup : oGroupList) {
+                logger.trace("Processing OccupancyGroup: {}", oGroup.href);
+                int groupNum = oGroup.getOccupancyGroup();
+                // Only process occupancy groups with associated occupancy sensors
+                if (groupNum > 0 && oGroup.AssociatedSensors != null) {
+                    String areaName;
+                    if (oGroup.AssociatedAreas.length > 0) {
+                        // If multiple associated areas are listed, use only the first
+                        areaName = areaMap.get(oGroup.AssociatedAreas[1].href);
+                    } else {
+                        areaName = "Occupancy Group";
+                    }
+                    notifyDiscovery(THING_TYPE_GROUP, groupNum, areaName);
+                }
+            }
+            areaMap = null;
+            oGroupList = null;
+        }
+    }
+
+    public void setOccupancyGroups(List<OccupancyGroup> oGroupList) {
+        this.oGroupList = oGroupList;
+
+        if (areaMap != null) {
+            processOccupancyGroups();
+        }
+    }
+
+    public void setAreas(List<Area> areaList) {
+        Map<String, String> areaMap = new HashMap<>();
+
+        for (Area area : areaList) {
+            areaMap.put(area.href, area.name);
+        }
+        this.areaMap = areaMap;
+
+        if (oGroupList != null) {
+            processOccupancyGroups();
         }
     }
 
