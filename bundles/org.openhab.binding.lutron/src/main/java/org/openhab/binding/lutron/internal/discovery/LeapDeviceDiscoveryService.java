@@ -28,9 +28,9 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.lutron.internal.LutronHandlerFactory;
 import org.openhab.binding.lutron.internal.handler.LeapBridgeHandler;
-import org.openhab.binding.lutron.internal.protocol.leap.Area;
-import org.openhab.binding.lutron.internal.protocol.leap.Device;
-import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroup;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.Area;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.Device;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.OccupancyGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
