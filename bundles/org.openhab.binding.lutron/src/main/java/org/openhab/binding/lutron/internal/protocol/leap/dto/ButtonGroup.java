@@ -10,11 +10,13 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.lutron.internal.protocol.leap;
+package org.openhab.binding.lutron.internal.protocol.leap.dto;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import org.openhab.binding.lutron.internal.protocol.leap.AbstractMessageBody;
 
 import com.google.gson.annotations.SerializedName;
 

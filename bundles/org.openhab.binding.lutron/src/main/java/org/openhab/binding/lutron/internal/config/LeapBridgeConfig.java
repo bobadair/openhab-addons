@@ -12,28 +12,25 @@
  */
 package org.openhab.binding.lutron.internal.config;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
+
 /**
  * Configuration settings for an {@link org.openhab.binding.lutron.internal.handler.LeapBridgeHandler}.
  *
  * @author Bob Adair - Initial contribution
  */
+@NonNullByDefault
 public class LeapBridgeConfig {
-    public String ipAddress;
+    public @Nullable String ipAddress;
     public int port = 8081;
-    public String keystore;
-    public String keystorePassword;
+    public @Nullable String keystore;
+    public @Nullable String keystorePassword;
     // public String clientKey;
     // public String clientCert;
     // public String bridgeCert;
     // public String keyPassword;
-    public String discoveryFile;
     public int reconnect;
     public int heartbeat;
     public int delay = 0;
-
-    // public boolean sameConnectionParameters(LeapBridgeConfig config) {
-    // // return StringUtils.equals(ipAddress, config.ipAddress) && (reconnect == config.reconnect)
-    // // && (heartbeat == config.heartbeat) && (delay == config.delay);
-    // return true;
-    // }
 }
