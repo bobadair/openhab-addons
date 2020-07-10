@@ -10,21 +10,22 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.lutron.internal.protocol.leap;
+package org.openhab.binding.lutron.internal.protocol.leap.dto;
 
 import com.google.gson.annotations.SerializedName;
 
 /**
- * LEAP AffectedZone Object
+ * TODO: Referenced from Area but can be removed if unused
  *
  * @author Bob Adair - Initial contribution
  */
-public class AffectedZone {
-    @SerializedName("href")
-    public String href;
-    @SerializedName("Zone")
-    public Href zone = new Href();
+public class Category {
+    @SerializedName("Type")
+    public String type;
 
-    public AffectedZone() {
+    @SerializedName("SubType")
+    public String subType;
+
+    public Category() {
     }
 }

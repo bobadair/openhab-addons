@@ -10,14 +10,21 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.lutron.internal.protocol.leap;
+package org.openhab.binding.lutron.internal.protocol.leap.dto;
 
 import com.google.gson.annotations.SerializedName;
 
 /**
  * @author Bob Adair - Initial contribution
  */
-public class OccupancySensor {
-    @SerializedName("OccupancySensor")
-    public Href occupancySensor;
+public class Href {
+    @SerializedName("href")
+    public String href = "";
+
+    public Href() {
+    }
+
+    public Href(String href) {
+        this.href = href;
+    }
 }
