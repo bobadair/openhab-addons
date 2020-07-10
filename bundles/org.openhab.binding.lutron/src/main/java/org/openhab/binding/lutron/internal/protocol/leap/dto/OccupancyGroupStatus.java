@@ -10,39 +10,39 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.lutron.internal.protocol.leap;
+package org.openhab.binding.lutron.internal.protocol.leap.dto;
 
 import java.util.regex.Pattern;
+
+import org.openhab.binding.lutron.internal.protocol.leap.AbstractMessageBody;
 
 import com.google.gson.annotations.SerializedName;
 
 /**
- * LEAP OccupancyGroup object
+ * LEAP OccupancyGroupStatus object
  *
  * @author Bob Adair - Initial contribution
  */
-public class OccupancyGroup extends AbstractMessageBody {
+public class OccupancyGroupStatus extends AbstractMessageBody {
     private static final Pattern OGROUP_HREF_PATTERN = Pattern.compile("/occupancygroup/([0-9]+)");
 
     @SerializedName("href")
     public String href;
 
-    @SerializedName("AssociatedSensors")
-    public OccupancySensor[] associatedSensors;
+    @SerializedName("OccupancyGroup")
+    public Href occupancyGroup;
 
-    @SerializedName("AssociatedAreas")
-    public Area[] associatedAreas; // TODO: Verify this works
+    @SerializedName("OccupancyStatus")
+    public String occupancyStatus; // Occupied, Unoccupied, or Unknown
 
-    @SerializedName("ProgrammingType")
-    public String programmingType;
-
-    @SerializedName("ProgrammingModel")
-    public Href programmingModel;
-
-    public OccupancyGroup() {
+    public OccupancyGroupStatus() {
     }
 
     public int getOccupancyGroup() {
-        return hrefNumber(OGROUP_HREF_PATTERN, href);
+        if (occupancyGroup != null && occupancyGroup.href != null) {
+            return hrefNumber(OGROUP_HREF_PATTERN, occupancyGroup.href);
+        } else {
+            return 0;
+        }
     }
 }

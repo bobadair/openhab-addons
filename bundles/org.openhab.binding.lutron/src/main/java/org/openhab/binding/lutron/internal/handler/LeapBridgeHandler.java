@@ -63,14 +63,14 @@ import org.openhab.binding.lutron.internal.discovery.LeapDeviceDiscoveryService;
 import org.openhab.binding.lutron.internal.protocol.FanSpeedType;
 import org.openhab.binding.lutron.internal.protocol.LutronCommandNew;
 import org.openhab.binding.lutron.internal.protocol.leap.AbstractMessageBody;
-import org.openhab.binding.lutron.internal.protocol.leap.Area;
-import org.openhab.binding.lutron.internal.protocol.leap.ButtonGroup;
-import org.openhab.binding.lutron.internal.protocol.leap.Device;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
-import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroup;
-import org.openhab.binding.lutron.internal.protocol.leap.OccupancyGroupStatus;
 import org.openhab.binding.lutron.internal.protocol.leap.Request;
-import org.openhab.binding.lutron.internal.protocol.leap.ZoneStatus;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.Area;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.ButtonGroup;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.Device;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.OccupancyGroup;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.OccupancyGroupStatus;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.ZoneStatus;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.slf4j.Logger;
@@ -153,6 +153,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         SSLContext sslContext;
 
         config = getConfigAs(LeapBridgeConfig.class);
+        String keystorePassword = (config.keystorePassword == null) ? "" : config.keystorePassword;
 
         if (StringUtils.isEmpty(config.ipAddress)) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "bridge address not specified");
@@ -167,16 +168,17 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
             logger.trace("Initializing keystore");
             KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 
-            if (config.keystore != null) {
-                keystore.load(new FileInputStream(config.keystore), config.keystorePassword.toCharArray());
+            if (config.keystore != null && keystorePassword != null) {
+                keystore.load(new FileInputStream(config.keystore), keystorePassword.toCharArray());
             } else {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Keystore not configured");
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                        "Keystore/keystore password not configured");
                 return;
             }
 
             logger.trace("Initializing SSL Context");
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(keystore, config.keystorePassword.toCharArray());
+            kmf.init(keystore, keystorePassword.toCharArray());
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmf.init(keystore);
