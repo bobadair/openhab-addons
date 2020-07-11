@@ -129,7 +129,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                     String areaName;
                     if (oGroup.associatedAreas.length > 0) {
                         // If multiple associated areas are listed, use only the first
-                        areaName = areaMap.get(oGroup.associatedAreas[1].href);
+                        areaName = areaMap.get(oGroup.associatedAreas[0].href);
                     } else {
                         areaName = "Occupancy Group";
                     }
