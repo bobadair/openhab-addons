@@ -152,6 +152,9 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     public void initialize() {
         SSLContext sslContext;
 
+        childHandlerMap.clear();
+        groupHandlerMap.clear();
+
         config = getConfigAs(LeapBridgeConfig.class);
         String keystorePassword = (config.keystorePassword == null) ? "" : config.keystorePassword;
 
@@ -208,9 +211,6 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
             return;
         }
 
-        childHandlerMap.clear(); // TODO: Should these be here or in the constructor?
-        groupHandlerMap.clear();
-
         updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Connecting");
         scheduler.submit(this::connect); // start the async connect task
     }
@@ -261,6 +261,15 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         logger.debug("Starting keepAlive job with interval {}", heartbeatInterval);
         keepAlive = scheduler.scheduleWithFixedDelay(this::sendKeepAlive, heartbeatInterval, heartbeatInterval,
                 TimeUnit.MINUTES);
+    }
+
+    /**
+     * Called by discovery service to request fresh discovery data
+     */
+    public void queryDiscoveryData() {
+        sendCommand(new LeapCommand(Request.getDevices()));
+        sendCommand(new LeapCommand(Request.getAreas()));
+        sendCommand(new LeapCommand(Request.getOccupancyGroups()));
     }
 
     private void scheduleConnectRetry(long waitMinutes) {

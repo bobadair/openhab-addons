@@ -35,15 +35,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link LeapDeviceDiscoveryService} discovers devices paired with Lutron bridges using the LEAP protocol, such as
- * Caseta.
+ * The {@link LeapDeviceDiscoveryService} discovers devices paired with Lutron bridges using the LEAP protocol.
  *
  * @author Bob Adair - Initial contribution
  */
 @NonNullByDefault
 public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
 
-    private static final int DISCOVERY_SERVICE_TIMEOUT = 60; // seconds
+    private static final int DISCOVERY_SERVICE_TIMEOUT = 0; // seconds
 
     private final Logger logger = LoggerFactory.getLogger(LeapDeviceDiscoveryService.class);
 
@@ -51,18 +50,17 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
     private @Nullable Map<Integer, String> areaMap;
     private @Nullable List<OccupancyGroup> oGroupList;
 
-    // private final Gson gson;
     private final LeapBridgeHandler bridgeHandler;
 
     public LeapDeviceDiscoveryService(LeapBridgeHandler bridgeHandler) throws IllegalArgumentException {
         super(LutronHandlerFactory.DISCOVERABLE_DEVICE_TYPES_UIDS, DISCOVERY_SERVICE_TIMEOUT);
         this.bridgeHandler = bridgeHandler;
-        // gson = new GsonBuilder().create();
     }
 
     @Override
     protected void startScan() {
-        // TODO: Query bridge for devices, areas, occupancy groups
+        logger.debug("Active discovery scan started");
+        bridgeHandler.queryDiscoveryData();
     }
 
     public void processDeviceDefinitions(List<Device> deviceList) {
@@ -71,7 +69,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
             Integer deviceId = device.getDevice();
             String label = device.getFullyQualifiedName();
             if (deviceId > 0) {
-                logger.trace("Discovered device: {} type: {} id: {}", label, device.deviceType, deviceId);
+                logger.debug("Discovered device: {} type: {} id: {}", label, device.deviceType, deviceId);
                 if (device.deviceType != null) {
                     switch (device.deviceType) {
                         case "SmartBridge":
@@ -135,7 +133,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                     } else {
                         areaName = "Occupancy Group";
                     }
-                    logger.trace("Discovered occupancy group number: {} areas: {} 1st area name: {}", groupNum,
+                    logger.debug("Discovered occupancy group: {} areas: {} area name: {}", groupNum,
                             oGroup.associatedAreas.length, areaName);
                     notifyDiscovery(THING_TYPE_GROUP, groupNum, areaName);
                 }
@@ -177,7 +175,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
     private void notifyDiscovery(ThingTypeUID thingTypeUID, @Nullable Integer integrationId, String label,
             @Nullable String propName, @Nullable Object propValue) {
         if (integrationId == null) {
-            logger.info("Discovered {} with no integration ID", label);
+            logger.debug("Discovered {} with no integration ID", label);
             return;
         }
         ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
@@ -193,7 +191,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
         DiscoveryResult result = DiscoveryResultBuilder.create(uid).withBridge(bridgeUID).withLabel(label)
                 .withProperties(properties).withRepresentationProperty(INTEGRATION_ID).build();
         thingDiscovered(result);
-        logger.debug("Discovered {}", uid);
+        logger.trace("Discovered {}", uid);
     }
 
     private void notifyDiscovery(ThingTypeUID thingTypeUID, Integer integrationId, String label) {
