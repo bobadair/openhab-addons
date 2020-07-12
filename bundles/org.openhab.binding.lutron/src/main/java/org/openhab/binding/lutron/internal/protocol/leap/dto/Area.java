@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.lutron.internal.protocol.leap.dto;
 
+import java.util.regex.Pattern;
+
 import org.openhab.binding.lutron.internal.protocol.leap.AbstractMessageBody;
 
 import com.google.gson.annotations.SerializedName;
@@ -22,6 +24,8 @@ import com.google.gson.annotations.SerializedName;
  * @author Bob Adair - Initial contribution
  */
 public class Area extends AbstractMessageBody {
+    private static final Pattern AREA_HREF_PATTERN = Pattern.compile("/area/([0-9]+)");
+
     @SerializedName("href")
     public String href;
 
@@ -53,5 +57,9 @@ public class Area extends AbstractMessageBody {
     public Href daylightingGainSettings;
 
     public Area() {
+    }
+
+    public int getArea() {
+        return hrefNumber(AREA_HREF_PATTERN, href);
     }
 }
