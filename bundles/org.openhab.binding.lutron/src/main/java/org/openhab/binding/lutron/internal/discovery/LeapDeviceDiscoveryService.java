@@ -47,7 +47,8 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
 
     private final Logger logger = LoggerFactory.getLogger(LeapDeviceDiscoveryService.class);
 
-    private @Nullable Map<String, String> areaMap;
+    /** Area number to name map **/
+    private @Nullable Map<Integer, String> areaMap;
     private @Nullable List<OccupancyGroup> oGroupList;
 
     // private final Gson gson;
@@ -117,10 +118,11 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
     }
 
     private void processOccupancyGroups() {
-        Map<String, String> areaMap = this.areaMap;
+        Map<Integer, String> areaMap = this.areaMap;
         List<OccupancyGroup> oGroupList = this.oGroupList;
 
         if (areaMap != null && oGroupList != null) {
+            logger.trace("Processing occupancy groups");
             for (OccupancyGroup oGroup : oGroupList) {
                 logger.trace("Processing OccupancyGroup: {}", oGroup.href);
                 int groupNum = oGroup.getOccupancyGroup();
@@ -129,19 +131,22 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                     String areaName;
                     if (oGroup.associatedAreas.length > 0) {
                         // If multiple associated areas are listed, use only the first
-                        areaName = areaMap.get(oGroup.associatedAreas[0].href);
+                        areaName = areaMap.get(oGroup.associatedAreas[0].getArea());
                     } else {
                         areaName = "Occupancy Group";
                     }
+                    logger.trace("Discovered occupancy group number: {} areas: {} 1st area name: {}", groupNum,
+                            oGroup.associatedAreas.length, areaName);
                     notifyDiscovery(THING_TYPE_GROUP, groupNum, areaName);
                 }
             }
-            areaMap = null;
-            oGroupList = null;
+            this.areaMap = null;
+            this.oGroupList = null;
         }
     }
 
     public void setOccupancyGroups(List<OccupancyGroup> oGroupList) {
+        logger.trace("Setting occupancy groups list");
         this.oGroupList = oGroupList;
 
         if (areaMap != null) {
@@ -150,10 +155,17 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
     }
 
     public void setAreas(List<Area> areaList) {
-        Map<String, String> areaMap = new HashMap<>();
+        Map<Integer, String> areaMap = new HashMap<>();
 
+        logger.trace("Setting areas map");
         for (Area area : areaList) {
-            areaMap.put(area.href, area.name);
+            int areaNum = area.getArea();
+            logger.trace("Inserting area into map - num: {} name: {}", areaNum, area.name);
+            if (areaNum > 0) {
+                areaMap.put(areaNum, area.name);
+            } else {
+                logger.debug("Ignoring area with unparsable href {}", area.href);
+            }
         }
         this.areaMap = areaMap;
 
