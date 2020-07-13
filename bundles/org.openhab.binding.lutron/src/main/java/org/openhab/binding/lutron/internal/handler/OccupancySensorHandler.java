@@ -22,7 +22,7 @@ import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
+import org.openhab.binding.lutron.internal.protocol.DeviceCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,10 +80,10 @@ public class OccupancySensorHandler extends LutronHandler {
     @Override
     public void handleUpdate(LutronCommandType type, String... parameters) {
         if (type == LutronCommandType.DEVICE && parameters.length == 2
-                && LutronCommand.OCCUPIED_STATE_COMPONENT.equals(parameters[0])) {
-            if (LutronCommand.STATE_OCCUPIED.equals(parameters[1])) {
+                && DeviceCommand.OCCUPIED_STATE_COMPONENT.equals(parameters[0])) {
+            if (DeviceCommand.STATE_OCCUPIED.equals(parameters[1])) {
                 updateState(CHANNEL_OCCUPANCYSTATUS, OnOffType.ON);
-            } else if (LutronCommand.STATE_UNOCCUPIED.equals(parameters[1])) {
+            } else if (DeviceCommand.STATE_UNOCCUPIED.equals(parameters[1])) {
                 updateState(CHANNEL_OCCUPANCYSTATUS, OnOffType.OFF);
             }
         }

@@ -20,7 +20,6 @@ import org.openhab.binding.lutron.internal.handler.LeapBridgeHandler;
 import org.openhab.binding.lutron.internal.protocol.leap.CommandType;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
 import org.openhab.binding.lutron.internal.protocol.leap.Request;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
 import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
@@ -34,6 +33,27 @@ import org.slf4j.LoggerFactory;
  */
 @NonNullByDefault
 public class OutputCommand extends LutronCommandNew {
+    // shade, blind, dimmer defs
+    public static final Integer ACTION_ZONELEVEL = 1;
+    public static final Integer ACTION_STARTRAISING = 2;
+    public static final Integer ACTION_STARTLOWERING = 3;
+    public static final Integer ACTION_STOP = 4;
+    public static final Integer ACTION_POSITION_UPDATE = 32; // For shades/blinds. Undocumented in protocol guide.
+
+    // blind defs
+    public static final Integer ACTION_LIFTLEVEL = 1;
+    public static final Integer ACTION_TILTLEVEL = 9;
+    public static final Integer ACTION_LIFTTILTLEVEL = 10;
+    public static final Integer ACTION_STARTRAISINGTILT = 11;
+    public static final Integer ACTION_STARTLOWERINGTILT = 12;
+    public static final Integer ACTION_STOPTILT = 13;
+    public static final Integer ACTION_STARTRAISINGLIFT = 14;
+    public static final Integer ACTION_STARTLOWERINGLIFT = 15;
+    public static final Integer ACTION_STOPLIFT = 16;
+
+    // cco defs
+    public static final Integer ACTION_STATE = 1;
+    public static final Integer ACTION_PULSE = 6;
 
     private final Logger logger = LoggerFactory.getLogger(OutputCommand.class);
 
@@ -44,6 +64,7 @@ public class OutputCommand extends LutronCommandNew {
     private final FanSpeedType fanSpeed;
 
     /**
+     * OutputCommand constructor
      *
      * @param targetType
      * @param operation
@@ -68,6 +89,7 @@ public class OutputCommand extends LutronCommandNew {
     }
 
     /**
+     * OutputCommand constructor for fan commands
      *
      * @param targetType
      * @param operation
@@ -93,7 +115,7 @@ public class OutputCommand extends LutronCommandNew {
         builder.append(',').append(integrationId);
         builder.append(',').append(action);
 
-        if (parameter != null && targetType == TargetType.CCO && action.equals(LutronCommand.ACTION_PULSE)) {
+        if (parameter != null && targetType == TargetType.CCO && action.equals(OutputCommand.ACTION_PULSE)) {
             builder.append(',').append(String.format(Locale.ROOT, "%.2f", parameter));
         } else if (parameter != null) {
             builder.append(',').append(parameter);
@@ -122,7 +144,7 @@ public class OutputCommand extends LutronCommandNew {
         }
 
         if (operation == LutronOperation.QUERY) {
-            if (action.equals(LutronCommand.ACTION_ZONELEVEL)) {
+            if (action.equals(OutputCommand.ACTION_ZONELEVEL)) {
                 return new LeapCommand(Request.getZoneStatus(zone));
             } else {
                 logger.debug("Ignoring unsupported query action");
@@ -130,27 +152,27 @@ public class OutputCommand extends LutronCommandNew {
             }
         } else if (operation == LutronOperation.EXECUTE) {
             if (targetType == TargetType.SWITCH || targetType == TargetType.DIMMER) {
-                if (action.equals(LutronCommand.ACTION_ZONELEVEL) && parameter != null) {
+                if (action.equals(OutputCommand.ACTION_ZONELEVEL) && parameter != null) {
                     return new LeapCommand(Request.goToLevel(zone, parameter.intValue()));
                 } else {
                     logger.debug("Ignoring unsupported switch/dimmer action");
                     return null;
                 }
             } else if (targetType == TargetType.FAN) {
-                if (action.equals(LutronCommand.ACTION_ZONELEVEL)) {
+                if (action.equals(OutputCommand.ACTION_ZONELEVEL)) {
                     return new LeapCommand(Request.goToFanSpeed(zone, fanSpeed));
                 } else {
                     logger.debug("Ignoring unsupported fan action");
                     return null;
                 }
             } else if (targetType == TargetType.SHADE) {
-                if (action.equals(LutronCommand.ACTION_ZONELEVEL) && parameter != null) {
+                if (action.equals(OutputCommand.ACTION_ZONELEVEL) && parameter != null) {
                     return new LeapCommand(Request.goToLevel(zone, parameter.intValue()));
-                } else if (action.equals(LutronCommand.ACTION_STARTRAISING)) {
+                } else if (action.equals(OutputCommand.ACTION_STARTRAISING)) {
                     return new LeapCommand(Request.zoneCommand(zone, CommandType.RAISE));
-                } else if (action.equals(LutronCommand.ACTION_STARTLOWERING)) {
+                } else if (action.equals(OutputCommand.ACTION_STARTLOWERING)) {
                     return new LeapCommand(Request.zoneCommand(zone, CommandType.LOWER));
-                } else if (action.equals(LutronCommand.ACTION_STOP)) {
+                } else if (action.equals(OutputCommand.ACTION_STOP)) {
                     return new LeapCommand(Request.zoneCommand(zone, CommandType.STOP));
                 } else {
                     logger.debug("Ignoring unsupported shade action");
