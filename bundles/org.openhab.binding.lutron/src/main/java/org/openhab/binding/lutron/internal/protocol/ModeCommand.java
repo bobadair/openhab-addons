@@ -27,6 +27,8 @@ import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
  */
 @NonNullByDefault
 public class ModeCommand extends LutronCommandNew {
+    public static final Integer ACTION_STEP = 1;
+
     private final Integer action;
     private final @Nullable Integer parameter;
 

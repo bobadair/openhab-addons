@@ -17,7 +17,6 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.lutron.internal.handler.LeapBridgeHandler;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
 import org.openhab.binding.lutron.internal.protocol.leap.Request;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
 import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
@@ -29,6 +28,11 @@ import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
  */
 @NonNullByDefault
 public class GroupCommand extends LutronCommandNew {
+    public static final Integer ACTION_GROUPSTATE = 3;
+    public static final Integer STATE_GRP_OCCUPIED = 3;
+    public static final Integer STATE_GRP_UNOCCUPIED = 4;
+    public static final Integer STATE_GRP_UNKNOWN = 255;
+
     private final Integer action;
     private final @Nullable Integer state;
 
@@ -61,7 +65,7 @@ public class GroupCommand extends LutronCommandNew {
 
     @Override
     public @Nullable LeapCommand leapCommand(LeapBridgeHandler bridgeHandler, @Nullable Integer leapZone) {
-        if (action.equals(LutronCommand.ACTION_GROUPSTATE)) {
+        if (action.equals(GroupCommand.ACTION_GROUPSTATE)) {
             // Get status for all occupancy groups because you can't query just one
             return new LeapCommand(Request.getOccupancyGroupStatus());
         } else {

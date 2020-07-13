@@ -27,6 +27,14 @@ import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
  */
 @NonNullByDefault
 public class TimeclockCommand extends LutronCommandNew {
+    public static final Integer ACTION_CLOCKMODE = 1;
+    public static final Integer ACTION_SUNRISE = 2;
+    public static final Integer ACTION_SUNSET = 3;
+    public static final Integer ACTION_EXECEVENT = 5;
+    public static final Integer ACTION_SETEVENT = 6;
+    public static final Integer EVENT_ENABLE = 1;
+    public static final Integer EVENT_DISABLE = 2;
+
     private final Integer action;
     private final @Nullable Object parameter;
     private final @Nullable Boolean enable;

@@ -30,7 +30,6 @@ import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.lutron.internal.config.FanConfig;
 import org.openhab.binding.lutron.internal.protocol.FanSpeedType;
 import org.openhab.binding.lutron.internal.protocol.OutputCommand;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
 import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
@@ -81,7 +80,7 @@ public class FanHandler extends LutronHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.UNKNOWN, ThingStatusDetail.NONE, "Awaiting initial response");
-            queryOutput(TargetType.FAN, LutronCommand.ACTION_ZONELEVEL);
+            queryOutput(TargetType.FAN, OutputCommand.ACTION_ZONELEVEL);
             // handleUpdate() will set thing status to online when response arrives
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
@@ -92,7 +91,7 @@ public class FanHandler extends LutronHandler {
     public void channelLinked(ChannelUID channelUID) {
         if (channelUID.getId().equals(CHANNEL_FANSPEED) || channelUID.getId().equals(CHANNEL_FANLEVEL)) {
             // Refresh state when new item is linked.
-            queryOutput(TargetType.FAN, LutronCommand.ACTION_ZONELEVEL);
+            queryOutput(TargetType.FAN, OutputCommand.ACTION_ZONELEVEL);
         }
     }
 
@@ -104,21 +103,21 @@ public class FanHandler extends LutronHandler {
                 FanSpeedType speed = FanSpeedType.toFanSpeedType(level);
                 // output(TargetType.FAN, LutronCommand.ACTION_ZONELEVEL, level, null, null);
                 sendCommand(new OutputCommand(TargetType.FAN, LutronOperation.EXECUTE, getIntegrationId(),
-                        LutronCommand.ACTION_ZONELEVEL, speed, null, null));
+                        OutputCommand.ACTION_ZONELEVEL, speed, null, null));
             } else if (command.equals(OnOffType.ON)) {
                 // output(TargetType.FAN, LutronCommand.ACTION_ZONELEVEL, 100, null, null);
                 sendCommand(new OutputCommand(TargetType.FAN, LutronOperation.EXECUTE, getIntegrationId(),
-                        LutronCommand.ACTION_ZONELEVEL, FanSpeedType.HIGH, null, null));
+                        OutputCommand.ACTION_ZONELEVEL, FanSpeedType.HIGH, null, null));
             } else if (command.equals(OnOffType.OFF)) {
                 // output(TargetType.FAN, LutronCommand.ACTION_ZONELEVEL, 0, null, null);
                 sendCommand(new OutputCommand(TargetType.FAN, LutronOperation.EXECUTE, getIntegrationId(),
-                        LutronCommand.ACTION_ZONELEVEL, FanSpeedType.OFF, null, null));
+                        OutputCommand.ACTION_ZONELEVEL, FanSpeedType.OFF, null, null));
             }
         } else if (channelUID.getId().equals(CHANNEL_FANSPEED)) {
             if (command instanceof StringType) {
                 FanSpeedType speed = FanSpeedType.toFanSpeedType(command.toString());
                 sendCommand(new OutputCommand(TargetType.FAN, LutronOperation.EXECUTE, getIntegrationId(),
-                        LutronCommand.ACTION_ZONELEVEL, speed, null, null));
+                        OutputCommand.ACTION_ZONELEVEL, speed, null, null));
             }
         }
     }
@@ -126,7 +125,7 @@ public class FanHandler extends LutronHandler {
     @Override
     public void handleUpdate(LutronCommandType type, String... parameters) {
         if (type == LutronCommandType.OUTPUT && parameters.length > 1
-                && LutronCommand.ACTION_ZONELEVEL.toString().equals(parameters[0])) {
+                && OutputCommand.ACTION_ZONELEVEL.toString().equals(parameters[0])) {
             BigDecimal level = new BigDecimal(parameters[1]);
             if (getThing().getStatus() == ThingStatus.UNKNOWN) {
                 updateStatus(ThingStatus.ONLINE);
