@@ -24,7 +24,7 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.lutron.internal.config.GroupConfig;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
+import org.openhab.binding.lutron.internal.protocol.GroupCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,8 +76,8 @@ public class GroupHandler extends LutronHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.UNKNOWN, ThingStatusDetail.NONE, "Awaiting initial response");
-            queryGroup(LutronCommand.ACTION_GROUPSTATE); // handleUpdate() will set thing status to
-                                                         // online when response arrives
+            queryGroup(GroupCommand.ACTION_GROUPSTATE);
+            // handleUpdate() will set thing status to online when response arrives
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
@@ -87,7 +87,7 @@ public class GroupHandler extends LutronHandler {
     public void channelLinked(ChannelUID channelUID) {
         if (channelUID.getId().equals(CHANNEL_GROUPSTATE)) {
             // Refresh state when new item is linked.
-            queryGroup(LutronCommand.ACTION_GROUPSTATE);
+            queryGroup(GroupCommand.ACTION_GROUPSTATE);
         }
     }
 
@@ -95,7 +95,7 @@ public class GroupHandler extends LutronHandler {
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (channelUID.getId().equals(CHANNEL_GROUPSTATE)) {
             if (command instanceof RefreshType) {
-                queryGroup(LutronCommand.ACTION_GROUPSTATE);
+                queryGroup(GroupCommand.ACTION_GROUPSTATE);
             }
         }
     }
@@ -105,7 +105,7 @@ public class GroupHandler extends LutronHandler {
         int state;
 
         if (type == LutronCommandType.GROUP && parameters.length > 1
-                && LutronCommand.ACTION_GROUPSTATE.toString().equals(parameters[0])) {
+                && GroupCommand.ACTION_GROUPSTATE.toString().equals(parameters[0])) {
             try {
                 state = Integer.parseInt(parameters[1]);
             } catch (NumberFormatException e) {
@@ -115,11 +115,11 @@ public class GroupHandler extends LutronHandler {
             if (getThing().getStatus() == ThingStatus.UNKNOWN) {
                 updateStatus(ThingStatus.ONLINE);
             }
-            if (state == LutronCommand.STATE_GRP_OCCUPIED) {
+            if (state == GroupCommand.STATE_GRP_OCCUPIED) {
                 updateState(CHANNEL_GROUPSTATE, new StringType(STATE_OCCUPIED));
-            } else if (state == LutronCommand.STATE_GRP_UNOCCUPIED) {
+            } else if (state == GroupCommand.STATE_GRP_UNOCCUPIED) {
                 updateState(CHANNEL_GROUPSTATE, new StringType(STATE_UNOCCUPIED));
-            } else if (state == LutronCommand.STATE_GRP_UNKNOWN) {
+            } else if (state == GroupCommand.STATE_GRP_UNKNOWN) {
                 updateState(CHANNEL_GROUPSTATE, new StringType(STATE_UNKNOWN));
             } else {
                 logger.debug("Invalid occupancy state received: {}", state);

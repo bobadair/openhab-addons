@@ -18,7 +18,6 @@ import org.openhab.binding.lutron.internal.handler.LeapBridgeHandler;
 import org.openhab.binding.lutron.internal.protocol.leap.CommandType;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
 import org.openhab.binding.lutron.internal.protocol.leap.Request;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
 import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
@@ -32,6 +31,20 @@ import org.slf4j.LoggerFactory;
  */
 @NonNullByDefault
 public class DeviceCommand extends LutronCommandNew {
+    // keypad defs
+    public static final Integer ACTION_PRESS = 3;
+    public static final Integer ACTION_RELEASE = 4;
+    public static final Integer ACTION_HOLD = 5;
+    public static final Integer ACTION_LED_STATE = 9;
+    public static final Integer LED_OFF = 0;
+    public static final Integer LED_ON = 1;
+    public static final Integer LED_FLASH = 2; // Same as 1 on RA2 keypads
+    public static final Integer LED_RAPIDFLASH = 3; // Same as 1 on RA2 keypads
+
+    // occupancy sensor defs
+    public static final String OCCUPIED_STATE_COMPONENT = "2";
+    public static final String STATE_OCCUPIED = "3";
+    public static final String STATE_UNOCCUPIED = "4";
 
     private final Logger logger = LoggerFactory.getLogger(DeviceCommand.class);
 
@@ -70,12 +83,12 @@ public class DeviceCommand extends LutronCommandNew {
                 return null;
             }
 
-            if (action.equals(LutronCommand.ACTION_PRESS) && integrationId != null && leapComponent != null) {
+            if (action.equals(DeviceCommand.ACTION_PRESS) && integrationId != null && leapComponent != null) {
                 int button = bridgeHandler.getButton(integrationId, leapComponent);
                 if (button > 0) {
                     return new LeapCommand(Request.buttonCommand(button, CommandType.PRESSANDHOLD));
                 }
-            } else if (action.equals(LutronCommand.ACTION_RELEASE) && integrationId != null && leapComponent != null) {
+            } else if (action.equals(DeviceCommand.ACTION_RELEASE) && integrationId != null && leapComponent != null) {
                 int button = bridgeHandler.getButton(integrationId, leapComponent);
                 if (button > 0) {
                     return new LeapCommand(Request.buttonCommand(button, CommandType.RELEASE));
@@ -85,9 +98,9 @@ public class DeviceCommand extends LutronCommandNew {
                 return null;
             }
         } else if (targetType == TargetType.VIRTUALKEYPAD) {
-            if (action.equals(LutronCommand.ACTION_PRESS)) {
+            if (action.equals(DeviceCommand.ACTION_PRESS)) {
                 return new LeapCommand(Request.virtualButtonCommand(component, CommandType.PRESSANDRELEASE));
-            } else if (!action.equals(LutronCommand.ACTION_RELEASE)) {
+            } else if (!action.equals(DeviceCommand.ACTION_RELEASE)) {
                 logger.debug("Ignoring device command with unsupported action.");
                 return null;
             }

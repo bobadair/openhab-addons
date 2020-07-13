@@ -61,7 +61,9 @@ import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.lutron.internal.config.LeapBridgeConfig;
 import org.openhab.binding.lutron.internal.discovery.LeapDeviceDiscoveryService;
 import org.openhab.binding.lutron.internal.protocol.FanSpeedType;
+import org.openhab.binding.lutron.internal.protocol.GroupCommand;
 import org.openhab.binding.lutron.internal.protocol.LutronCommandNew;
+import org.openhab.binding.lutron.internal.protocol.OutputCommand;
 import org.openhab.binding.lutron.internal.protocol.leap.AbstractMessageBody;
 import org.openhab.binding.lutron.internal.protocol.leap.LeapCommand;
 import org.openhab.binding.lutron.internal.protocol.leap.Request;
@@ -71,7 +73,6 @@ import org.openhab.binding.lutron.internal.protocol.leap.dto.Device;
 import org.openhab.binding.lutron.internal.protocol.leap.dto.OccupancyGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.dto.OccupancyGroupStatus;
 import org.openhab.binding.lutron.internal.protocol.leap.dto.ZoneStatus;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -686,7 +687,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
                 // handle fan controller
                 FanSpeedType fanSpeed = zoneStatus.fanSpeed;
                 try {
-                    handler.handleUpdate(LutronCommandType.OUTPUT, LutronCommand.ACTION_ZONELEVEL.toString(),
+                    handler.handleUpdate(LutronCommandType.OUTPUT, OutputCommand.ACTION_ZONELEVEL.toString(),
                             new Integer(fanSpeed.speed()).toString());
                 } catch (NumberFormatException e) {
                     logger.warn("Number format exception parsing update");
@@ -696,7 +697,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
             } else {
                 // handle switch/dimmer/shade
                 try {
-                    handler.handleUpdate(LutronCommandType.OUTPUT, LutronCommand.ACTION_ZONELEVEL.toString(),
+                    handler.handleUpdate(LutronCommandType.OUTPUT, OutputCommand.ACTION_ZONELEVEL.toString(),
                             new Integer(zoneStatus.level).toString());
                 } catch (NumberFormatException e) {
                     logger.warn("Number format exception parsing update");
@@ -724,16 +725,16 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
             try {
                 switch (occupancyStatus) {
                     case "Occupied":
-                        handler.handleUpdate(LutronCommandType.GROUP, LutronCommand.ACTION_GROUPSTATE.toString(),
-                                LutronCommand.STATE_GRP_OCCUPIED.toString());
+                        handler.handleUpdate(LutronCommandType.GROUP, GroupCommand.ACTION_GROUPSTATE.toString(),
+                                GroupCommand.STATE_GRP_OCCUPIED.toString());
                         break;
                     case "Unoccupied":
-                        handler.handleUpdate(LutronCommandType.GROUP, LutronCommand.ACTION_GROUPSTATE.toString(),
-                                LutronCommand.STATE_GRP_UNOCCUPIED.toString());
+                        handler.handleUpdate(LutronCommandType.GROUP, GroupCommand.ACTION_GROUPSTATE.toString(),
+                                GroupCommand.STATE_GRP_UNOCCUPIED.toString());
                         break;
                     case "Unknown":
-                        handler.handleUpdate(LutronCommandType.GROUP, LutronCommand.ACTION_GROUPSTATE.toString(),
-                                LutronCommand.STATE_GRP_UNKNOWN.toString());
+                        handler.handleUpdate(LutronCommandType.GROUP, GroupCommand.ACTION_GROUPSTATE.toString(),
+                                GroupCommand.STATE_GRP_UNKNOWN.toString());
                         break;
                     default:
                         logger.debug("Unexpected occupancy status: {}", occupancyStatus);

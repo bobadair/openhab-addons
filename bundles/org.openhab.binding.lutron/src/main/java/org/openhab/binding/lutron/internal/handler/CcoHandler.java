@@ -27,7 +27,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
+import org.openhab.binding.lutron.internal.protocol.OutputCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
 import org.slf4j.Logger;
@@ -121,8 +121,8 @@ public class CcoHandler extends LutronHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.UNKNOWN, ThingStatusDetail.NONE, "Awaiting initial response");
-            queryOutput(TargetType.CCO, LutronCommand.ACTION_STATE); // handleUpdate() will set thing status to online
-                                                                     // when response arrives
+            queryOutput(TargetType.CCO, OutputCommand.ACTION_STATE);
+            // handleUpdate() will set thing status to online when response arrives
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
@@ -138,7 +138,7 @@ public class CcoHandler extends LutronHandler {
                 updateState(channelUID, OnOffType.OFF);
             } else if (outputType == CcoOutputType.MAINTAINED) {
                 // Query the device state and let the service routine update the channel state
-                queryOutput(TargetType.CCO, LutronCommand.ACTION_STATE);
+                queryOutput(TargetType.CCO, OutputCommand.ACTION_STATE);
             } else {
                 logger.warn("invalid output type defined for CCO {}", integrationId);
             }
@@ -152,22 +152,22 @@ public class CcoHandler extends LutronHandler {
         if (channelUID.getId().equals(CHANNEL_SWITCH)) {
             if (command instanceof OnOffType && command == OnOffType.ON) {
                 if (outputType == CcoOutputType.PULSED) {
-                    output(TargetType.CCO, LutronCommand.ACTION_PULSE, new Double(defaultPulse), null, null);
+                    output(TargetType.CCO, OutputCommand.ACTION_PULSE, new Double(defaultPulse), null, null);
                     updateState(channelUID, OnOffType.OFF);
                 } else {
-                    output(TargetType.CCO, LutronCommand.ACTION_STATE, 100, null, null);
+                    output(TargetType.CCO, OutputCommand.ACTION_STATE, 100, null, null);
                 }
             }
 
             else if (command instanceof OnOffType && command == OnOffType.OFF) {
                 if (outputType == CcoOutputType.MAINTAINED) {
-                    output(TargetType.CCO, LutronCommand.ACTION_STATE, 0, null, null);
+                    output(TargetType.CCO, OutputCommand.ACTION_STATE, 0, null, null);
                 }
             }
 
             else if (command instanceof RefreshType) {
                 if (outputType == CcoOutputType.MAINTAINED) {
-                    queryOutput(TargetType.CCO, LutronCommand.ACTION_STATE);
+                    queryOutput(TargetType.CCO, OutputCommand.ACTION_STATE);
                 } else {
                     updateState(CHANNEL_SWITCH, OnOffType.OFF);
                 }
@@ -185,7 +185,7 @@ public class CcoHandler extends LutronHandler {
 
         if (outputType == CcoOutputType.MAINTAINED) {
             if (type == LutronCommandType.OUTPUT && parameters.length > 1
-                    && LutronCommand.ACTION_STATE.toString().equals(parameters[0])) {
+                    && OutputCommand.ACTION_STATE.toString().equals(parameters[0])) {
                 if (getThing().getStatus() == ThingStatus.UNKNOWN) {
                     updateStatus(ThingStatus.ONLINE);
                 }
