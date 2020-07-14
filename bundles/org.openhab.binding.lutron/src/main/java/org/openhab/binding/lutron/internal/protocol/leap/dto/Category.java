@@ -15,7 +15,7 @@ package org.openhab.binding.lutron.internal.protocol.leap.dto;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * TODO: Referenced from Area but can be removed if unused
+ * Referenced from Area but can be removed if unused
  *
  * @author Bob Adair - Initial contribution
  */
