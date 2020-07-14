@@ -87,7 +87,8 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 /**
- * Bridge handler responsible for communicating with Lutron hubs using the LEAP protocol, such as Caseta and RA2 Select.
+ * Bridge handler responsible for communicating with Lutron hubs that support the LEAP protocol, such as Caseta and RA2
+ * Select.
  *
  * @author Bob Adair - Initial contribution
  */
@@ -380,7 +381,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
                 handleMessage(msg);
             }
             if (msg == null) {
-                logger.info("End of input stream detected");
+                logger.debug("End of input stream detected");
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Connection lost");
             }
         } catch (IOException e) {
@@ -616,7 +617,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
             for (Device device : deviceList) {
                 Integer zoneid = device.getZone();
                 Integer deviceid = device.getDevice();
-                logger.debug("Found device: {} id: {} zone: {}", device.name, deviceid, zoneid);
+                logger.trace("Found device: {} id: {} zone: {}", device.name, deviceid, zoneid);
                 if (zoneid > 0 && deviceid > 0) {
                     zoneToDevice.put(zoneid, deviceid);
                     deviceToZone.put(deviceid, zoneid);

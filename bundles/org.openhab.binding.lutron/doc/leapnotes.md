@@ -28,9 +28,8 @@ When it has completed, it will have generated three files: caseta.crt, caseta.ke
 
 Once the key and certificate files have been generated, you will need to load them into a java keystore.
 You’ll then need to set the ipAddress, keystore, and keystorePassword parameters of the leapbridge thing.
-Ignore any other key-related bridge options, as it will only work with a java keystore right now.
 
-You can load a keystore from the key and certificate files with the following commands.
+You can load a keystore from the key and certificate files on a linux system with the following commands.
 You’ll need access to both the java keytool and openssl.
 
 ```
@@ -49,9 +48,11 @@ The caseta.p12 file is just an intermediate file that you can delete later.
 ## Functional differences between LIP and LEAP
 
 * Using LIP on Caseta you can’t receive notifications of occupancy group status changes (occupied/unoccupied/unknown), but using LEAP you can.
-* Conversely, LIP provides notifications of keypad key presses, while LEAP does not (as far as is currently known). This means that using ipbridge you can trigger rules and take actions on keypad key presses/releases, but using leapbridge you can’t.
+* Conversely, LIP provides notifications of keypad key presses, while LEAP does not (as far as is currently known).
+This means that using ipbridge you can trigger rules and take actions on keypad key presses/releases, but using leapbridge you can’t.
 * Caseta and RA2 Select device discovery is supported via LEAP.
-* LIP is a publicly documented and supported protocol, while LEAP is not. This means that Lutron could make a change that breaks LEAP support at any time.
+* LIP is a publicly documented and supported protocol, while LEAP is not.
+This means that Lutron could make a change that breaks LEAP support at any time.
 
 ## Running both LIP and LEAP
 It is possible to run leapbridge and ipbridge at the same time, for the same bridge device, but each device should only be configured through one bridge.
