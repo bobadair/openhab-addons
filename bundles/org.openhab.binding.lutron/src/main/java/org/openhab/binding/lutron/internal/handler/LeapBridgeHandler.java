@@ -46,7 +46,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.library.types.StringType;
@@ -160,7 +159,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         config = getConfigAs(LeapBridgeConfig.class);
         String keystorePassword = (config.keystorePassword == null) ? "" : config.keystorePassword;
 
-        if (StringUtils.isEmpty(config.ipAddress)) {
+        if (config.ipAddress == null || config.ipAddress.isEmpty()) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "bridge address not specified");
             return;
         }
