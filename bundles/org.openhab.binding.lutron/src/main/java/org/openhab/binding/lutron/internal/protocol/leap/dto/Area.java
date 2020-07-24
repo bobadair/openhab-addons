@@ -35,8 +35,8 @@ public class Area extends AbstractMessageBody {
     @SerializedName("Parent")
     public Href parent;
 
-    @SerializedName("Category")
-    public Category category;
+    // @SerializedName("Category")
+    // public Category category;
 
     @SerializedName("AssociatedDevices")
     public Href[] associatedDevices;
