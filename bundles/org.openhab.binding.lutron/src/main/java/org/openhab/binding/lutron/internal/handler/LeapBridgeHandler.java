@@ -159,7 +159,8 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         config = getConfigAs(LeapBridgeConfig.class);
         String keystorePassword = (config.keystorePassword == null) ? "" : config.keystorePassword;
 
-        if (config.ipAddress == null || config.ipAddress.isEmpty()) {
+        String ipAddress = config.ipAddress;
+        if (ipAddress == null || ipAddress.isEmpty()) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "bridge address not specified");
             return;
         }
