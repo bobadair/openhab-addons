@@ -104,7 +104,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                             notifyDiscovery(THING_TYPE_SHADE, deviceId, label);
                             break;
                         case "RPSOccupancySensor":
-                            notifyDiscovery(THING_TYPE_OCCUPANCYSENSOR, deviceId, label);
+                            // Don't discover sensors. Using occupancy groups instead.
                             break;
                         default:
                             logger.info("Unrecognized device type: {}", device.deviceType);
