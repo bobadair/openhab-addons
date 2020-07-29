@@ -25,8 +25,8 @@ import org.openhab.binding.lutron.internal.protocol.GroupCommand;
 import org.openhab.binding.lutron.internal.protocol.LutronCommandNew;
 import org.openhab.binding.lutron.internal.protocol.ModeCommand;
 import org.openhab.binding.lutron.internal.protocol.OutputCommand;
+import org.openhab.binding.lutron.internal.protocol.SysvarCommand;
 import org.openhab.binding.lutron.internal.protocol.TimeclockCommand;
-import org.openhab.binding.lutron.internal.protocol.lip.LutronCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronOperation;
 import org.openhab.binding.lutron.internal.protocol.lip.TargetType;
@@ -119,6 +119,11 @@ public abstract class LutronHandler extends BaseThingHandler {
                 new OutputCommand(type, LutronOperation.QUERY, getIntegrationId(), action, (Integer) null, null, null));
     }
 
+    // protected void queryOutput(TargetType type, Object... parameters) {
+    // sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.OUTPUT, getIntegrationId(), null,
+    // parameters));
+    // }
+
     protected void device(TargetType type, Integer component, @Nullable Integer leapComponent, Integer action,
             @Nullable Object parameter) {
         sendCommand(new DeviceCommand(type, LutronOperation.EXECUTE, getIntegrationId(), component, leapComponent,
@@ -133,23 +138,16 @@ public abstract class LutronHandler extends BaseThingHandler {
         sendCommand(new TimeclockCommand(LutronOperation.EXECUTE, getIntegrationId(), action, parameter, enable));
     }
 
-    protected void sysvar(Object... parameters) {
-        sendCommand(
-                new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.SYSVAR, getIntegrationId(), parameters));
-    }
-
-    protected void shadegrp(Object... parameters) {
-        sendCommand(
-                new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.SHADEGRP, getIntegrationId(), parameters));
-    }
-
-    protected void queryOutput(TargetType type, Object... parameters) {
-        sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.OUTPUT, getIntegrationId(), null,
-                parameters));
-    }
-
     protected void queryTimeclock(Integer action) {
         sendCommand(new TimeclockCommand(LutronOperation.QUERY, getIntegrationId(), action, null, null));
+    }
+
+    protected void sysvar(Integer action, Object parameter) {
+        sendCommand(new SysvarCommand(LutronOperation.EXECUTE, getIntegrationId(), action, parameter));
+    }
+
+    protected void querySysvar(Integer action) {
+        sendCommand(new SysvarCommand(LutronOperation.QUERY, getIntegrationId(), action, null));
     }
 
     protected void greenMode(Integer action, @Nullable Integer parameter) {
@@ -160,19 +158,20 @@ public abstract class LutronHandler extends BaseThingHandler {
         sendCommand(new ModeCommand(LutronOperation.QUERY, getIntegrationId(), action, null));
     }
 
-    protected void queryGreenMode(Object... parameters) {
-        sendCommand(new LutronCommand(TargetType.GREENMODE, LutronOperation.QUERY, LutronCommandType.MODE,
-                getIntegrationId(), null, parameters));
-    }
+    // protected void queryGreenMode(Object... parameters) {
+    // sendCommand(new LutronCommand(TargetType.GREENMODE, LutronOperation.QUERY, LutronCommandType.MODE,
+    // getIntegrationId(), null, parameters));
+    // }
 
-    protected void querySysvar(Object... parameters) {
-        sendCommand(new LutronCommand(LutronOperation.QUERY, LutronCommandType.SYSVAR, getIntegrationId(), parameters));
-    }
+    // protected void shadegrp(Object... parameters) {
+    // sendCommand(new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.SHADEGRP, getIntegrationId(),
+    // parameters));
+    // }
 
-    protected void queryShadegrp(Object... parameters) {
-        sendCommand(
-                new LutronCommand(LutronOperation.QUERY, LutronCommandType.SHADEGRP, getIntegrationId(), parameters));
-    }
+    // protected void queryShadegrp(Object... parameters) {
+    // sendCommand(new LutronCommand(LutronOperation.QUERY, LutronCommandType.SHADEGRP, getIntegrationId(),
+    // parameters));
+    // }
 
     protected void queryGroup(Integer action) {
         sendCommand(new GroupCommand(LutronOperation.QUERY, getIntegrationId(), action, null));

@@ -459,8 +459,8 @@ public class IPBridgeHandler extends LutronBridgeHandler {
 
     private void setSysvarMonitoring(boolean enable) {
         Integer setting = (enable) ? MONITOR_ENABLE : MONITOR_DISABLE;
-        sendCommand(
-                new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.MONITORING, -1, MONITOR_SYSVAR, setting));
+        sendCommand(new LIPCommand(TargetType.BRIDGE, LutronOperation.EXECUTE, LutronCommandType.MONITORING, null,
+                MONITOR_SYSVAR, setting));
     }
 
     @Override
