@@ -28,6 +28,7 @@ public enum TargetType {
     KEYPAD,
     SHADE,
     SWITCH,
+    SYSVAR,
     TIMECLOCK,
     VIRTUALKEYPAD;
 }
