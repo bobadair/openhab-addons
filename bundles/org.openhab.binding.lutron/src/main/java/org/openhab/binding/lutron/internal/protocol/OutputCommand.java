@@ -59,8 +59,8 @@ public class OutputCommand extends LutronCommandNew {
 
     private final Integer action;
     private final @Nullable Number parameter;
-    private final @Nullable Object fadeTime;
-    private final @Nullable Object delayTime;
+    private final @Nullable LutronDuration fadeTime;
+    private final @Nullable LutronDuration delayTime;
     private final FanSpeedType fanSpeed;
 
     /**
@@ -75,7 +75,7 @@ public class OutputCommand extends LutronCommandNew {
      * @param delayTime
      */
     public OutputCommand(TargetType targetType, LutronOperation operation, Integer integrationId, Integer action,
-            @Nullable Number parameter, @Nullable Object fadeTime, @Nullable Object delayTime) {
+            @Nullable Number parameter, @Nullable LutronDuration fadeTime, @Nullable LutronDuration delayTime) {
         super(targetType, operation, LutronCommandType.OUTPUT, integrationId);
         this.action = action;
         this.parameter = parameter;
@@ -100,7 +100,7 @@ public class OutputCommand extends LutronCommandNew {
      * @param delayTime
      */
     public OutputCommand(TargetType targetType, LutronOperation operation, Integer integrationId, Integer action,
-            FanSpeedType fanSpeed, @Nullable Object fadeTime, @Nullable Object delayTime) {
+            FanSpeedType fanSpeed, @Nullable LutronDuration fadeTime, @Nullable LutronDuration delayTime) {
         super(targetType, operation, LutronCommandType.OUTPUT, integrationId);
         this.action = action;
         this.fanSpeed = fanSpeed;
@@ -151,11 +151,25 @@ public class OutputCommand extends LutronCommandNew {
                 return null;
             }
         } else if (operation == LutronOperation.EXECUTE) {
-            if (targetType == TargetType.SWITCH || targetType == TargetType.DIMMER) {
+            if (targetType == TargetType.SWITCH) {
                 if (action.equals(OutputCommand.ACTION_ZONELEVEL) && parameter != null) {
                     return new LeapCommand(Request.goToLevel(zone, parameter.intValue()));
                 } else {
-                    logger.debug("Ignoring unsupported switch/dimmer action");
+                    logger.debug("Ignoring unsupported switch action");
+                    return null;
+                }
+            } else if (targetType == TargetType.DIMMER) {
+                if (action.equals(OutputCommand.ACTION_ZONELEVEL) && parameter != null) {
+                    if (fadeTime == null && delayTime == null) {
+                        return new LeapCommand(Request.goToLevel(zone, parameter.intValue()));
+                    } else {
+                        LutronDuration fade = (fadeTime == null) ? new LutronDuration(0) : fadeTime;
+                        LutronDuration delay = (delayTime == null) ? new LutronDuration(0) : delayTime;
+                        return new LeapCommand(Request.goToDimmedLevel(zone, parameter.intValue(), fade.asLeapString(),
+                                delay.asLeapString()));
+                    }
+                } else {
+                    logger.debug("Ignoring unsupported dimmer action");
                     return null;
                 }
             } else if (targetType == TargetType.FAN) {

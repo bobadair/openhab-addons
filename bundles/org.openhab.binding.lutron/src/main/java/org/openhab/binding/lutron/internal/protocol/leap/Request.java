@@ -30,12 +30,22 @@ public class Request {
         return String.format(request, zone, value);
     }
 
+    /** fadeTime must be in the format hh:mm:ss **/
     public static String goToDimmedLevel(int zone, int value, String fadeTime) {
         String request = "{\"CommuniqueType\": \"CreateRequest\","
                 + "\"Header\": {\"Url\": \"/zone/%d/commandprocessor\"},\"Body\": {\"Command\": {"
                 + "\"CommandType\": \"GoToDimmedLevel\","
                 + "\"DimmedLevelParameters\": {\"Level\": %d, \"FadeTime\": \"%s\"}}}}";
-        return String.format(request, zone, value);
+        return String.format(request, zone, value, fadeTime);
+    }
+
+    /** fadeTime and delayTime must be in the format hh:mm:ss **/
+    public static String goToDimmedLevel(int zone, int value, String fadeTime, String delayTime) {
+        String request = "{\"CommuniqueType\": \"CreateRequest\","
+                + "\"Header\": {\"Url\": \"/zone/%d/commandprocessor\"},\"Body\": {\"Command\": {"
+                + "\"CommandType\": \"GoToDimmedLevel\","
+                + "\"DimmedLevelParameters\": {\"Level\": %d, \"FadeTime\": \"%s\", \"DelayTime\": \"%s\"}}}}";
+        return String.format(request, zone, value, fadeTime, delayTime);
     }
 
     public static String goToFanSpeed(int zone, FanSpeedType fanSpeed) {

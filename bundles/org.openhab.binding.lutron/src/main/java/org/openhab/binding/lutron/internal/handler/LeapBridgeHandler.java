@@ -859,7 +859,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
             if (keepAliveReconnect != null) {
                 logger.trace("Canceling scheduled reconnect job.");
                 keepAliveReconnect.cancel(interrupt);
-                keepAliveReconnect = null;
+                this.keepAliveReconnect = null;
             }
         }
     }
