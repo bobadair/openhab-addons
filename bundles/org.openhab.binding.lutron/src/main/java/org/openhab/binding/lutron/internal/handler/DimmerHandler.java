@@ -109,7 +109,7 @@ public class DimmerHandler extends LutronHandler {
         if (channelUID.getId().equals(CHANNEL_LIGHTLEVEL)) {
             if (command instanceof Number) {
                 int level = ((Number) command).intValue();
-                output(TargetType.DIMMER, OutputCommand.ACTION_ZONELEVEL, level, "0.25", null);
+                output(TargetType.DIMMER, OutputCommand.ACTION_ZONELEVEL, level, new LutronDuration("0.25"), null);
             } else if (command.equals(OnOffType.ON)) {
                 output(TargetType.DIMMER, OutputCommand.ACTION_ZONELEVEL, 100, fadeInTime, null);
             } else if (command.equals(OnOffType.OFF)) {
@@ -120,7 +120,7 @@ public class DimmerHandler extends LutronHandler {
 
     public void setLightLevel(BigDecimal level, LutronDuration fade, LutronDuration delay) {
         int intLevel = level.intValue();
-        output(ACTION_ZONELEVEL, intLevel, fade, delay);
+        output(TargetType.DIMMER, OutputCommand.ACTION_ZONELEVEL, intLevel, fade, delay);
     }
 
     @Override

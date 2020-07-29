@@ -102,7 +102,7 @@ public class ShadeHandler extends LutronHandler {
         if (channelUID.getId().equals(CHANNEL_SHADELEVEL)) {
             if (command instanceof PercentType) {
                 int level = ((PercentType) command).intValue();
-                output(TargetType.SHADE, OutputCommand.ACTION_ZONELEVEL, level, "0", null);
+                output(TargetType.SHADE, OutputCommand.ACTION_ZONELEVEL, level, null, null);
                 // TODO: update channel state here?
             } else if (command.equals(UpDownType.UP)) {
                 output(TargetType.SHADE, OutputCommand.ACTION_STARTRAISING, null, null, null);

@@ -23,6 +23,7 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.openhab.binding.lutron.internal.protocol.DeviceCommand;
 import org.openhab.binding.lutron.internal.protocol.GroupCommand;
 import org.openhab.binding.lutron.internal.protocol.LutronCommandNew;
+import org.openhab.binding.lutron.internal.protocol.LutronDuration;
 import org.openhab.binding.lutron.internal.protocol.ModeCommand;
 import org.openhab.binding.lutron.internal.protocol.OutputCommand;
 import org.openhab.binding.lutron.internal.protocol.SysvarCommand;
@@ -108,8 +109,8 @@ public abstract class LutronHandler extends BaseThingHandler {
         }
     }
 
-    protected void output(TargetType type, int action, @Nullable Number parameter, @Nullable Object fade,
-            @Nullable Object delay) {
+    protected void output(TargetType type, int action, @Nullable Number parameter, @Nullable LutronDuration fade,
+            @Nullable LutronDuration delay) {
         sendCommand(
                 new OutputCommand(type, LutronOperation.EXECUTE, getIntegrationId(), action, parameter, fade, delay));
     }
