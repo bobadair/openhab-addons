@@ -228,10 +228,10 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
 
     @Override
     protected synchronized void removeHandler(ThingHandler thingHandler) {
-        if (thingHandler instanceof IPBridgeHandler) {
+        if (thingHandler instanceof IPBridgeHandler || thingHandler instanceof LeapBridgeHandler) {
             ServiceRegistration<?> serviceReg = discoveryServiceRegMap.remove(thingHandler.getThing().getUID());
             if (serviceReg != null) {
-                logger.debug("Unregistering discovery service.");
+                logger.debug("Unregistering device discovery service.");
                 serviceReg.unregister();
             }
         }
@@ -243,7 +243,7 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
      * @param bridgeHandler IP bridge handler for which to register the discovery service
      */
     private synchronized void registerDiscoveryService(IPBridgeHandler bridgeHandler) {
-        logger.debug("Registering XML discovery service.");
+        logger.debug("Registering XML device discovery service.");
         LutronDeviceDiscoveryService discoveryService = new LutronDeviceDiscoveryService(bridgeHandler, httpClient);
         bridgeHandler.setDiscoveryService(discoveryService);
         discoveryServiceRegMap.put(bridgeHandler.getThing().getUID(),
@@ -256,7 +256,7 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
      * @param bridgeHandler LEAP bridge handler for which to register the discovery service
      */
     private synchronized void registerLeapDiscoveryService(LeapBridgeHandler bridgeHandler) {
-        logger.debug("Registering LEAP discovery service.");
+        logger.debug("Registering LEAP device discovery service.");
         LeapDeviceDiscoveryService discoveryService = new LeapDeviceDiscoveryService(bridgeHandler);
         bridgeHandler.setDiscoveryService(discoveryService);
         discoveryServiceRegMap.put(bridgeHandler.getThing().getUID(),
