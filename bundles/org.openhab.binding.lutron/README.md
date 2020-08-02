@@ -30,7 +30,7 @@ This binding currently supports the following thing types:
 * **switch** - Switch or relay module
 * **fan** - Fan controller
 * **occupancysensor** - Occupancy/vacancy sensor
-* **group** - Occupancy group
+* **ogroup** - Occupancy group
 * **keypad** - Lutron seeTouch or Hybrid seeTouch Keypad
 * **ttkeypad** - Tabletop seeTouch Keypad
 * **intlkeypad** - International seeTouch Keypad (HomeWorks QS only)
@@ -214,9 +214,9 @@ Thing occupancysensor shopsensor [ integrationId=7 ]
 
 ### Occupancy Groups
 
-A **group** thing interfaces to an occupancy group, which shows occcupancy/vacancy status for an area or room with one or more occupancy sensors.
+A **ogroup** thing interfaces to an occupancy group, which shows occcupancy/vacancy status for an area or room with one or more occupancy sensors.
 On RadioRA2 and HomeWorks QS systems, you should generally choose to interface to either an occupancy group or individual occupancy sensors for a given area.
-On Caseta systems, you cannot interface to individual sensors and must use the *group* thing.
+On Caseta systems, you cannot interface to individual sensors and must use the *ogroup* thing.
 The `integrationId` parameter must be set to the occupancy group ID.
 
 The binding creates one read-only *groupstate* channel, item type String, category Motion.
@@ -225,7 +225,7 @@ The value can be "OCCUPIED", "UNOCCUPIED", or "UNKNOWN".
 Thing configuration file example:
 
 ```
-Thing group lrgroup [ integrationId=7 ]
+Thing ogroup lrgroup [ integrationId=7 ]
 ```
 
 ### seeTouch and Hybrid seeTouch Keypads
@@ -637,7 +637,7 @@ The following is a summary of channels for all RadioRA 2 binding things:
 | fan                 | fanspeed          | String        | Set/get fan speed using string options       |
 | fan                 | fanlevel          | Dimmer        | Set/get fan speed using a dimmer channel     |
 | occupancysensor     | occupancystatus   | Switch        | Occupancy sensor status                      |
-| group               | groupstate        | String        | Occupancy group status                       |
+| ogroup              | groupstate        | String        | Occupancy group status                       |
 | cco                 | switchstatus      | Switch        | On/off status of the CCO                     |
 | keypads (all)       | button*           | Switch        | Keypad button                                |
 | keypads(except pico)| led*              | Switch        | LED indicator for the associated button      |
@@ -666,7 +666,7 @@ Appropriate channels will be created automatically by the keypad, ttkeypad, intl
 |fan        |fanspeed       |StringType    |"OFF","LOW","MEDIUM","MEDIUMHIGH","HIGH"               |
 |fan        |fanlevel       |PercentType   |OnOffType, PercentType                                 |
 |occ. sensor|occupancystatus|OnOffType     |(*readonly*)                                           |
-|group      |groupstate     |StringType    |"OCCUPIED","UNOCCUPIED","UNKNOWN" (*readonly*)         |
+|ogroup     |groupstate     |StringType    |"OCCUPIED","UNOCCUPIED","UNKNOWN" (*readonly*)         |
 |cco        |switchstatus   |OnOffType     |OnOffType, RefreshType                                 |
 |keypads    |button*        |OnOffType     |OnOffType                                              |
 |           |led*           |OnOffType     |OnOffType, RefreshType                                 |

@@ -15,11 +15,11 @@ package org.openhab.binding.lutron.internal.config;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * Configuration settings for a {@link org.openhab.binding.lutron.internal.handler.GroupHandler}.
+ * Configuration settings for a {@link org.openhab.binding.lutron.internal.handler.OGroupHandler}.
  *
  * @author Bob Adair - Initial contribution
  */
 @NonNullByDefault
-public class GroupConfig {
+public class OGroupConfig {
     public int integrationId;
 }

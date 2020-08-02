@@ -400,7 +400,7 @@
 		</config-description>
 	</thing-type>
 
-	<thing-type id="group">
+	<thing-type id="ogroup">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="ipbridge"/>
 			<bridge-type-ref id="leapbridge"/>

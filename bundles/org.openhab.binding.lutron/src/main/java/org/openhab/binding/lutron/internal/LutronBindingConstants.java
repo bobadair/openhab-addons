@@ -52,7 +52,7 @@ public class LutronBindingConstants {
     public static final ThingTypeUID THING_TYPE_PALLADIOMKEYPAD = new ThingTypeUID(BINDING_ID, "palladiomkeypad");
     public static final ThingTypeUID THING_TYPE_WCI = new ThingTypeUID(BINDING_ID, "wci");
     public static final ThingTypeUID THING_TYPE_SYSVAR = new ThingTypeUID(BINDING_ID, "sysvar");
-    public static final ThingTypeUID THING_TYPE_GROUP = new ThingTypeUID(BINDING_ID, "group");
+    public static final ThingTypeUID THING_TYPE_OGROUP = new ThingTypeUID(BINDING_ID, "ogroup");
     public static final ThingTypeUID THING_TYPE_FAN = new ThingTypeUID(BINDING_ID, "fan");
 
     // List of all Channel ids

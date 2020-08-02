@@ -23,7 +23,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
-import org.openhab.binding.lutron.internal.config.GroupConfig;
+import org.openhab.binding.lutron.internal.config.OGroupConfig;
 import org.openhab.binding.lutron.internal.protocol.GroupCommand;
 import org.openhab.binding.lutron.internal.protocol.lip.LutronCommandType;
 import org.slf4j.Logger;
@@ -35,16 +35,16 @@ import org.slf4j.LoggerFactory;
  * @author Bob Adair - Initial contribution
  */
 @NonNullByDefault
-public class GroupHandler extends LutronHandler {
+public class OGroupHandler extends LutronHandler {
     private static final String STATE_OCCUPIED = "OCCUPIED";
     private static final String STATE_UNOCCUPIED = "UNOCCUPIED";
     private static final String STATE_UNKNOWN = "UNKNOWN";
 
-    private final Logger logger = LoggerFactory.getLogger(GroupHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(OGroupHandler.class);
 
-    private @NonNullByDefault({}) GroupConfig config;
+    private @NonNullByDefault({}) OGroupConfig config;
 
-    public GroupHandler(Thing thing) {
+    public OGroupHandler(Thing thing) {
         super(thing);
     }
 
@@ -58,7 +58,7 @@ public class GroupHandler extends LutronHandler {
 
     @Override
     public void initialize() {
-        config = getConfigAs(GroupConfig.class);
+        config = getConfigAs(OGroupConfig.class);
         if (config.integrationId <= 0) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
                     "No valid integrationId configured");

@@ -45,7 +45,7 @@ import org.openhab.binding.lutron.internal.handler.DimmerHandler;
 import org.openhab.binding.lutron.internal.handler.FanHandler;
 import org.openhab.binding.lutron.internal.handler.GrafikEyeKeypadHandler;
 import org.openhab.binding.lutron.internal.handler.GreenModeHandler;
-import org.openhab.binding.lutron.internal.handler.GroupHandler;
+import org.openhab.binding.lutron.internal.handler.OGroupHandler;
 import org.openhab.binding.lutron.internal.handler.IPBridgeHandler;
 import org.openhab.binding.lutron.internal.handler.IntlKeypadHandler;
 import org.openhab.binding.lutron.internal.handler.KeypadHandler;
@@ -96,7 +96,7 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
                             THING_TYPE_TTKEYPAD, THING_TYPE_INTLKEYPAD, THING_TYPE_PICO, THING_TYPE_VIRTUALKEYPAD,
                             THING_TYPE_VCRX, THING_TYPE_CCO, THING_TYPE_SHADE, THING_TYPE_TIMECLOCK,
                             THING_TYPE_GREENMODE, THING_TYPE_QSIO, THING_TYPE_GRAFIKEYEKEYPAD, THING_TYPE_BLIND,
-                            THING_TYPE_PALLADIOMKEYPAD, THING_TYPE_WCI, THING_TYPE_GROUP, THING_TYPE_FAN)
+                            THING_TYPE_PALLADIOMKEYPAD, THING_TYPE_WCI, THING_TYPE_OGROUP, THING_TYPE_FAN)
                     .collect(Collectors.toSet()));
 
     // Used by the HwDiscoveryService
@@ -201,8 +201,8 @@ public class LutronHandlerFactory extends BaseThingHandlerFactory {
             return new BlindHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_SYSVAR)) {
             return new SysvarHandler(thing);
-        } else if (thingTypeUID.equals(THING_TYPE_GROUP)) {
-            return new GroupHandler(thing);
+        } else if (thingTypeUID.equals(THING_TYPE_OGROUP)) {
+            return new OGroupHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_FAN)) {
             return new FanHandler(thing);
         } else if (thingTypeUID.equals(PrgConstants.THING_TYPE_PRGBRIDGE)) {

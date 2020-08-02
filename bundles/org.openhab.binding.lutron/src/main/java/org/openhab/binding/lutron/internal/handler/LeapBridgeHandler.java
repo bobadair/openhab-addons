@@ -134,7 +134,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     private final AtomicBoolean buttonDataLoaded = new AtomicBoolean(false);
 
     private final Map<Integer, LutronHandler> childHandlerMap = new ConcurrentHashMap<>();
-    private final Map<Integer, GroupHandler> groupHandlerMap = new ConcurrentHashMap<>();
+    private final Map<Integer, OGroupHandler> groupHandlerMap = new ConcurrentHashMap<>();
 
     private @Nullable LeapDeviceDiscoveryService discoveryService;
 
@@ -721,7 +721,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         logger.trace("Group {} state update: {}", groupNumber, occupancyStatus);
 
         // dispatch update to proper handler
-        GroupHandler handler = findGroupHandler(groupNumber);
+        OGroupHandler handler = findGroupHandler(groupNumber);
         if (handler != null) {
             try {
                 switch (occupancyStatus) {
@@ -821,7 +821,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         }
     }
 
-    private @Nullable GroupHandler findGroupHandler(int integrationId) {
+    private @Nullable OGroupHandler findGroupHandler(int integrationId) {
         return groupHandlerMap.get(integrationId);
     }
 
@@ -875,9 +875,9 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
 
     @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
-        if (childHandler instanceof GroupHandler) {
+        if (childHandler instanceof OGroupHandler) {
             // We need a different map for group things because the numbering is separate
-            GroupHandler handler = (GroupHandler) childHandler;
+            OGroupHandler handler = (OGroupHandler) childHandler;
             int groupId = handler.getIntegrationId();
             groupHandlerMap.put(groupId, handler);
             logger.trace("Registered group handler for ID {}", groupId);
@@ -891,8 +891,8 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
 
     @Override
     public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
-        if (childHandler instanceof GroupHandler) {
-            GroupHandler handler = (GroupHandler) childHandler;
+        if (childHandler instanceof OGroupHandler) {
+            OGroupHandler handler = (OGroupHandler) childHandler;
             int groupId = handler.getIntegrationId();
             groupHandlerMap.remove(groupId);
             logger.trace("Unregistered group handler for ID {}", groupId);

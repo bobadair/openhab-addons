@@ -280,7 +280,7 @@ public class LutronDeviceDiscoveryService extends AbstractDiscoveryService {
             switch (type) {
                 case MOTION_SENSOR:
                     notifyDiscovery(THING_TYPE_OCCUPANCYSENSOR, device.getIntegrationId(), label);
-                    notifyDiscovery(THING_TYPE_GROUP, area.getIntegrationId(), area.getName());
+                    notifyDiscovery(THING_TYPE_OGROUP, area.getIntegrationId(), area.getName());
                     break;
 
                 case SEETOUCH_KEYPAD:

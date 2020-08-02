@@ -135,7 +135,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                     }
                     logger.debug("Discovered occupancy group: {} areas: {} area name: {}", groupNum,
                             oGroup.associatedAreas.length, areaName);
-                    notifyDiscovery(THING_TYPE_GROUP, groupNum, areaName);
+                    notifyDiscovery(THING_TYPE_OGROUP, groupNum, areaName);
                 }
             }
             this.areaMap = null;
