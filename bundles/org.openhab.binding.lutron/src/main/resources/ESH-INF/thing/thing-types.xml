@@ -735,8 +735,8 @@
 				<label>Virtual Keypad Type</label>
 				<description>System type for virtual keypad</description>
 				<options>
-					<option value="Caseta">Caseta Scene Buttons</option>
-					<option value="Other">HomeWorks/RA 2/Other</option>
+					<option value="Caseta">Caseta/RA2 Select Scene Buttons</option>
+					<option value="Other">HomeWorks/RadioRA 2/Other</option>
 				</options>
 				<default>Other</default>
 			</parameter>

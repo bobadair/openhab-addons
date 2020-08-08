@@ -73,6 +73,7 @@ public class LeapDeviceDiscoveryService extends AbstractDiscoveryService {
                 if (device.deviceType != null) {
                     switch (device.deviceType) {
                         case "SmartBridge":
+                        case "RA2SelectMainRepeater":
                             notifyDiscovery(THING_TYPE_VIRTUALKEYPAD, deviceId, label, "model", "Caseta");
                             break;
                         case "WallDimmer":
