@@ -14,7 +14,8 @@
 
 Unlike LIP, which was designed to use a simple serial or telnet connection and authenticates using a username/password, LEAP uses a SSL connection and authenticates using certificates.
 This necessarily makes configuration more complicated.
-At the moment, the necessary certificate files can be generated using the get_lutron_cert.py script available from https://github.com/gurumitts/pylutron-caseta .
+There are several open source utilities available for generating the certificate files necessary to access your Caseta or RA2 Select hub.
+One good choice is the get_lutron_cert.py script included with the pylutron library which is available on Github at https://github.com/gurumitts/pylutron-caseta .
 On a unix system, you can easily retrieve it using curl with a command like:
 
 ```
@@ -27,7 +28,7 @@ Running it will not affect your existing hub configuration or Lutron app install
 When it has completed, it will have generated three files: caseta.crt, caseta.key, and caseta-bridge.crt.
 
 Once the key and certificate files have been generated, you will need to load them into a java keystore.
-You’ll then need to set the ipAddress, keystore, and keystorePassword parameters of the leapbridge thing.
+
 
 You can load a keystore from the key and certificate files on a linux system with the following commands.
 You’ll need access to both the java keytool and openssl.
@@ -45,6 +46,9 @@ In the example above, the pkcs12 store password was set to “secret”, but hop
 The lutron.keystore file that you end up with is the one you’ll need to give the binding access to.
 The caseta.p12 file is just an intermediate file that you can delete later.
 
+Finally you’ll then need to set the ipAddress, keystore, and keystorePassword parameters of the leapbridge thing.
+The ipAddress will be set for you if you used discovery to detect a Caseta Smart Bridge.
+
 ## Functional differences between LIP and LEAP
 
 * Using LIP on Caseta you can’t receive notifications of occupancy group status changes (occupied/unoccupied/unknown), but using LEAP you can.
@@ -55,5 +59,5 @@ This means that using ipbridge you can trigger rules and take actions on keypad 
 This means that Lutron could make a change that breaks LEAP support at any time.
 
 ## Running both LIP and LEAP
-It is possible to run leapbridge and ipbridge at the same time, for the same bridge device, but each device should only be configured through one bridge.
-Remember that LEAP device ids and LIP device IDs are not necessarily equal!
+It is possible to run leapbridge and ipbridge at the same time, for the same bridge device, but each managed device (e.g. keypad or dimmer) should only be configured through *one* bridge.
+Remember that LEAP device IDs and LIP integration IDs are not necessarily equal!
