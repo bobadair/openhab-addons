@@ -52,6 +52,7 @@ public class KeypadHandler extends ADThingHandler {
     private boolean singleAddress;
     private @Nullable IntCommandMap intCommandMap;
     private @Nullable KeypadMessage previousMessage;
+    private long addressMaskLong = 0;
 
     public KeypadHandler(Thing thing) {
         super(thing);
@@ -61,11 +62,17 @@ public class KeypadHandler extends ADThingHandler {
     public void initialize() {
         config = getConfigAs(KeypadConfig.class);
 
-        if (config.addressMask < 0) {
+        try {
+            addressMaskLong = Long.parseLong(config.addressMask, 16);
+        } catch (NumberFormatException e) {
+            addressMaskLong = -1;
+        }
+
+        if (addressMaskLong < 0) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Invalid addressMask setting");
             return;
         }
-        singleAddress = (Integer.bitCount(config.addressMask) == 1);
+        singleAddress = (Long.bitCount(addressMaskLong) == 1); // TODO - Confirm this always works
 
         try {
             intCommandMap = new IntCommandMap(config.commandMapping);
@@ -139,7 +146,7 @@ public class KeypadHandler extends ADThingHandler {
             cmd = cmd.replace("H", ADCommand.SPECIAL_KEY_8);
 
             if (singleAddress) {
-                sendCommand(ADCommand.addressedMessage(config.addressMask, cmd)); // send from keypad address
+                sendCommand(ADCommand.addressedMessage(0, cmd)); // TODO send from keypad address
             } else {
                 sendCommand(new ADCommand(cmd)); // send from AD address
             }
@@ -156,9 +163,9 @@ public class KeypadHandler extends ADThingHandler {
         }
         KeypadMessage kpMsg = (KeypadMessage) msg;
 
-        int addressMask = kpMsg.getIntAddressMask();
+        long msgAddressMask = kpMsg.getLongAddressMask();
 
-        if (!(((config.addressMask & addressMask) != 0) || config.addressMask == 0 || addressMask == 0)) {
+        if (!(((addressMaskLong & msgAddressMask) != 0) || addressMaskLong == 0 || msgAddressMask == 0)) {
             return;
         }
         logger.trace("Keypad handler for address mask {} received update: {}", config.addressMask, kpMsg);
@@ -173,7 +180,7 @@ public class KeypadHandler extends ADThingHandler {
                     || kpMsg.alphaMessage.contains("Press *  to show faults")) {
                 logger.debug("Sending * command to show faults.");
                 if (singleAddress) {
-                    sendCommand(ADCommand.addressedMessage(config.addressMask, "*")); // send from keypad address
+                    sendCommand(ADCommand.addressedMessage(0, "*")); // TODO send from keypad address
                 } else {
                     sendCommand(new ADCommand("*")); // send from AD address
                 }
