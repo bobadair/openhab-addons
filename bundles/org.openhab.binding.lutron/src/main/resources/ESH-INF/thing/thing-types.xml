@@ -90,24 +90,24 @@
 				<label>Keystore Password</label>
 				<description>Password for the keystore file</description>
 			</parameter>
-<!--
-			<parameter name="clientKey" type="text">
+			<!--
+				<parameter name="clientKey" type="text">
 				<label>Client Key File</label>
 				<description>Client key file (caseta.key) path</description>
-			</parameter>
-			<parameter name="clientCert" type="text">
+				</parameter>
+				<parameter name="clientCert" type="text">
 				<label>Client Cert File</label>
 				<description>Client certificate file (caseta.crt) path</description>
-			</parameter>
-			<parameter name="bridgeCert" type="text">
+				</parameter>
+				<parameter name="bridgeCert" type="text">
 				<label>Bridge Cert File</label>
 				<description>Bridge certificate file (caseta-bridge.crt) path</description>
-			</parameter>
-			<parameter name="keyPassword" type="text">
+				</parameter>
+				<parameter name="keyPassword" type="text">
 				<label>Key Password</label>
 				<description>Key Password</description>
-			</parameter>
--->
+				</parameter>
+			-->
 			<parameter name="reconnect" type="integer" min="1" max="60" unit="min">
 				<label>Reconnect Interval</label>
 				<description>The period in minutes that the handler will wait between connection attempts</description>
