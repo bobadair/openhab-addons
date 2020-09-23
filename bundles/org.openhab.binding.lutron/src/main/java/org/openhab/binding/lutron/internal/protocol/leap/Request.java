@@ -22,6 +22,7 @@ import org.openhab.binding.lutron.internal.protocol.FanSpeedType;
  */
 @NonNullByDefault
 public class Request {
+    public static final String BUTTON_GROUP_URL = "/buttongroup";
 
     public static String goToLevel(int zone, int value) {
         String request = "{\"CommuniqueType\": \"CreateRequest\","
@@ -95,7 +96,7 @@ public class Request {
     }
 
     public static String getButtonGroups() {
-        return request(CommuniqueType.READREQUEST, "/buttongroup");
+        return request(CommuniqueType.READREQUEST, BUTTON_GROUP_URL);
     }
 
     public static String getAreas() {
