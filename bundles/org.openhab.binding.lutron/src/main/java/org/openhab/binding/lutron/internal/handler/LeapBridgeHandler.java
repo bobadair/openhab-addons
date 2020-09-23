@@ -69,6 +69,7 @@ import org.openhab.binding.lutron.internal.protocol.leap.Request;
 import org.openhab.binding.lutron.internal.protocol.leap.dto.Area;
 import org.openhab.binding.lutron.internal.protocol.leap.dto.ButtonGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.dto.Device;
+import org.openhab.binding.lutron.internal.protocol.leap.dto.Header;
 import org.openhab.binding.lutron.internal.protocol.leap.dto.OccupancyGroup;
 import org.openhab.binding.lutron.internal.protocol.leap.dto.OccupancyGroupStatus;
 import org.openhab.binding.lutron.internal.protocol.leap.dto.ZoneStatus;
@@ -463,6 +464,15 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
     private void handleReadResponseMessage(JsonObject message) {
         try {
             JsonObject header = message.get("Header").getAsJsonObject();
+            Header headerObj = gson.fromJson(header, Header.class);
+
+            // if 204/NoContent response received for buttongroup request, create empty button map
+            if (Request.BUTTON_GROUP_URL.equals(headerObj.url)
+                    && Header.STATUS_NO_CONTENT.equalsIgnoreCase(headerObj.statusCode)) {
+                handleEmptyButtonGroupDefinition();
+                return;
+            }
+
             if (!header.has("MessageBodyType")) {
                 logger.trace("No MessageBodyType in header");
                 return;
@@ -648,6 +658,18 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
             List<Integer> buttonList = buttonGroup.getButtonList();
             deviceButtonMap.put(parentDevice, buttonList);
         }
+        synchronized (deviceButtonMapLock) {
+            this.deviceButtonMap = deviceButtonMap;
+            buttonDataLoaded.set(true);
+        }
+        checkInitialized();
+    }
+
+    /**
+     * Called if NoContent response received for a buttongroup read request. Creates empty deviceButtonMap.
+     */
+    private void handleEmptyButtonGroupDefinition() {
+        Map<Integer, List<Integer>> deviceButtonMap = new HashMap<>();
         synchronized (deviceButtonMapLock) {
             this.deviceButtonMap = deviceButtonMap;
             buttonDataLoaded.set(true);
