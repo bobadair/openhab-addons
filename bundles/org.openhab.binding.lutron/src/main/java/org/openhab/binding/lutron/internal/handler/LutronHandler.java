@@ -87,17 +87,6 @@ public abstract class LutronHandler extends BaseThingHandler {
         }
     }
 
-    // private void sendCommand(LutronCommand command) {
-    // LutronBridgeHandler bridgeHandler = getBridgeHandler();
-    //
-    // if (bridgeHandler == null) {
-    // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.HANDLER_MISSING_ERROR, "No bridge associated");
-    // thingOfflineNotify();
-    // } else {
-    // bridgeHandler.sendCommand(command);
-    // }
-    // }
-
     protected void sendCommand(LutronCommandNew command) {
         LutronBridgeHandler bridgeHandler = getBridgeHandler();
 
@@ -119,11 +108,6 @@ public abstract class LutronHandler extends BaseThingHandler {
         sendCommand(
                 new OutputCommand(type, LutronOperation.QUERY, getIntegrationId(), action, (Integer) null, null, null));
     }
-
-    // protected void queryOutput(TargetType type, Object... parameters) {
-    // sendCommand(new LutronCommand(type, LutronOperation.QUERY, LutronCommandType.OUTPUT, getIntegrationId(), null,
-    // parameters));
-    // }
 
     protected void device(TargetType type, Integer component, @Nullable Integer leapComponent, Integer action,
             @Nullable Object parameter) {
@@ -158,21 +142,6 @@ public abstract class LutronHandler extends BaseThingHandler {
     protected void queryGreenMode(Integer action) {
         sendCommand(new ModeCommand(LutronOperation.QUERY, getIntegrationId(), action, null));
     }
-
-    // protected void queryGreenMode(Object... parameters) {
-    // sendCommand(new LutronCommand(TargetType.GREENMODE, LutronOperation.QUERY, LutronCommandType.MODE,
-    // getIntegrationId(), null, parameters));
-    // }
-
-    // protected void shadegrp(Object... parameters) {
-    // sendCommand(new LutronCommand(LutronOperation.EXECUTE, LutronCommandType.SHADEGRP, getIntegrationId(),
-    // parameters));
-    // }
-
-    // protected void queryShadegrp(Object... parameters) {
-    // sendCommand(new LutronCommand(LutronOperation.QUERY, LutronCommandType.SHADEGRP, getIntegrationId(),
-    // parameters));
-    // }
 
     protected void queryGroup(Integer action) {
         sendCommand(new GroupCommand(LutronOperation.QUERY, getIntegrationId(), action, null));

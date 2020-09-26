@@ -28,6 +28,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,6 +46,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -87,8 +89,8 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 /**
- * Bridge handler responsible for communicating with Lutron hubs that support the LEAP protocol, such as Caseta and RA2
- * Select.
+ * Bridge handler responsible for communicating with Lutron hubs that support the LEAP protocol, such as Caseta and
+ * RA2 Select.
  *
  * @author Bob Adair - Initial contribution
  */
@@ -186,11 +188,18 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             kmf.init(keystore, keystorePassword.toCharArray());
 
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(keystore);
+            TrustManager[] trustManagers;
+            if (!config.trusting) {
+                // Use default trust manager which will attempt to validate server certificate from hub
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                tmf.init(keystore);
+                trustManagers = tmf.getTrustManagers();
+            } else {
+                // Use no-op trust manager which will not verify certificates
+                trustManagers = defineNoOpTrustManager();
+            }
 
             sslContext = SSLContext.getInstance("TLS");
-            TrustManager[] trustManagers = tmf.getTrustManagers();
             sslContext.init(kmf.getKeyManagers(), trustManagers, null);
 
             sslsocketfactory = sslContext.getSocketFactory();
@@ -218,6 +227,42 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         scheduler.submit(this::connect); // start the async connect task
     }
 
+    /**
+     * Return a no-op SSL trust manager which will not verify server or client certificates.
+     */
+    private TrustManager[] defineNoOpTrustManager() {
+        return new TrustManager[] { new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(final X509Certificate @Nullable [] chain, final @Nullable String authType) {
+                logger.debug("Assuming client certificate is valid");
+                if (chain != null) {
+                    for (int cert = 0; cert < chain.length; cert++) {
+                        logger.trace("Subject DN: {}", chain[cert].getSubjectDN());
+                        logger.trace("Issuer DN: {}", chain[cert].getIssuerDN());
+                        logger.trace("Serial number {}:", chain[cert].getSerialNumber());
+                    }
+                }
+            }
+
+            @Override
+            public void checkServerTrusted(final X509Certificate @Nullable [] chain, final @Nullable String authType) {
+                logger.debug("Assuming server certificate is valid");
+                if (chain != null) {
+                    for (int cert = 0; cert < chain.length; cert++) {
+                        logger.trace("Subject DN: {}", chain[cert].getSubjectDN());
+                        logger.trace("Issuer DN: {}", chain[cert].getIssuerDN());
+                        logger.trace("Serial number: {}", chain[cert].getSerialNumber());
+                    }
+                }
+            }
+
+            @Override
+            public X509Certificate @Nullable [] getAcceptedIssuers() {
+                return null;
+            }
+        } };
+    }
+
     private synchronized void connect() {
         deviceDataLoaded.set(false);
         buttonDataLoaded.set(false);
@@ -232,14 +277,16 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
         } catch (UnknownHostException e) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Unknown host");
             return;
-        } catch (IOException e) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "IO error opening SSL connection");
-            disconnect();
-            scheduleConnectRetry(reconnectInterval); // Possibly a temporary problem. Try again later.
-            return;
         } catch (IllegalArgumentException e) {
             // port out of valid range
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Invalid port number");
+            return;
+        } catch (IOException e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Error opening SSL connection"); // TODO
+                                                                                                                      // getMesssage()
+            logger.info("Error opening SSL connection: {}", e.getMessage());
+            disconnect();
+            scheduleConnectRetry(reconnectInterval); // Possibly a temporary problem. Try again later.
             return;
         }
 
@@ -669,6 +716,7 @@ public class LeapBridgeHandler extends LutronBridgeHandler {
      * Called if NoContent response received for a buttongroup read request. Creates empty deviceButtonMap.
      */
     private void handleEmptyButtonGroupDefinition() {
+        logger.debug("No content in button group definition. Creating empty deviceButtonMap.");
         Map<Integer, List<Integer>> deviceButtonMap = new HashMap<>();
         synchronized (deviceButtonMapLock) {
             this.deviceButtonMap = deviceButtonMap;
