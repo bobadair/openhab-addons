@@ -121,6 +121,11 @@ For additional information on LEAP and instructions on configuring authenticatio
 
 The `ipAddress`, `keystore` and `keystorePassword` parameters must be set.
 The optional `port` parameter defaults to 8081 and should not normally need to be changed.
+
+The optional parameter `trusting` defaults to false. It should be set to true only if validation of the hub's server certificate is failing, possibly because the hostname you are using for it does not match its internal hostname.
+If this happens, the leapbridge status will be: "OFFLINE - COMMUNICATION_ERROR - Error opening SSL connection", and a message like the following may be logged:
+```Error opening SSL connection: sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target```.
+
 The optional advanced parameter `heartbeat` can be used to set the interval between connection keepalive heartbeat messages, in minutes.
 It defaults to 5.
 Note that the handler will wait up to 30 seconds for a heartbeat response before attempting to reconnect.

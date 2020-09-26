@@ -108,6 +108,11 @@
 				<description>Key Password</description>
 				</parameter>
 			-->
+			<parameter name="trusting" type="boolean" required="false">
+				<label>Trust SSL Certificates</label>
+				<description>Trust server SSL certificate without validating it</description>
+				<default>false</default>
+			</parameter>
 			<parameter name="reconnect" type="integer" min="1" max="60" unit="min">
 				<label>Reconnect Interval</label>
 				<description>The period in minutes that the handler will wait between connection attempts</description>
